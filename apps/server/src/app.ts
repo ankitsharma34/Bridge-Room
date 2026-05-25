@@ -1,4 +1,6 @@
 import express, { type Request, type Response } from "express";
+import { prisma } from "./prisma/prisma.js";
+import { redis } from "./redis/redis.js";
 
 const app = express();
 
@@ -9,4 +11,13 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+app.get("/api/health", async (req: Request, res: Response) => {
+  await prisma.$queryRaw`SELECT 1`;
+  await redis.ping();
+  res.json({
+    success: true,
+    database: "connected",
+    redis: "connected",
+  });
+});
 export default app;
