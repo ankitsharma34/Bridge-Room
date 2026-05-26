@@ -1,31 +1,22 @@
 {
+  "extends": "@repo/typescript-config/node.json",
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-
     "target": "ES2022",
-
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-
     "strict": true,
-
     "types": ["node"],
-
     "sourceMap": true,
-
     "declaration": true,
     "declarationMap": true,
-
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-
     "isolatedModules": true,
-
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-
   "include": [
     "src/**/*.ts",
     "generated/**/*.ts",
