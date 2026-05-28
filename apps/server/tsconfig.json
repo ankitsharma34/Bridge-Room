@@ -1,7 +1,6 @@
 {
   "extends": "@repo/typescript-config/node.json",
   "compilerOptions": {
-    "rootDir": "./src",
     "outDir": "./dist",
     "target": "ES2022",
     "module": "NodeNext",
@@ -19,11 +18,11 @@
   },
   "include": [
     "src/**/*.ts",
-    "generated/**/*.ts",
   ],
 
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "generated"
   ]
 }
