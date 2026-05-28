@@ -2,10 +2,16 @@ import express, { type Request, type Response } from "express";
 import { prisma } from "./prisma/prisma.js";
 import { redis } from "./redis/redis.js";
 import { loggerMiddleware } from "./middleware/logger.middleware.js";
+import authRouter from "./modules/auth/auth.routes.js";
 
 const app = express();
 
+// middlewares
+app.use(express.json());
 app.use(loggerMiddleware);
+
+// API endpoints
+app.use("/api/auth", authRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
