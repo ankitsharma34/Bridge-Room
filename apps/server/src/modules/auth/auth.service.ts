@@ -1,11 +1,11 @@
-import { hashPassword } from "../../utils/hash.js";
+import { comparePassword, hashPassword } from "../../utils/hash.js";
 import { AUTH_MESSAGES } from "./auth.constants.js";
 import {
   createUser,
   findUserByEmail,
   findUserByUsername,
 } from "./auth.repository.js";
-import type { RegisterUserInput } from "./auth.types.js";
+import type { LoginUserInput, RegisterUserInput } from "./auth.types.js";
 
 export const registerUser = async ({
   username,
@@ -31,4 +31,15 @@ export const registerUser = async ({
   });
 
   return user;
+};
+
+export const loginUser = async ({ email, password }: LoginUserInput) => {
+  const user = await findUserByEmail(email);
+  if (!user) {
+    throw new Error(AUTH_MESSAGES.USER_NOT_EXISTS);
+  }
+  const isPasswordMatch = await comparePassword(password, user.password);
+  if (!isPasswordMatch) {
+    throw new Error(AUTH_MESSAGES.USER_PASSWORD_NOT_MATCH);
+  }
 };
