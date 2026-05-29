@@ -1,16 +1,27 @@
 import type { Request, Response } from "express";
 import { ZodError } from "zod";
 import { loginSchema, registerSchema } from "./auth.schema.js";
-import { loginUser, registerUser } from "./auth.service.js";
-import { AUTH_MESSAGES } from "./auth.constants.js";
+import { createAuthTokens, loginUser, registerUser } from "./auth.service.js";
+import { AUTH_MESSAGES, REFRESH_TOKEN_AGE } from "./auth.constants.js";
+import { env } from "../../config/env.js";
 
 export const postRegister = async (req: Request, res: Response) => {
   try {
     const body = registerSchema.parse(req.body);
-    await registerUser(body);
+    const user = await registerUser(body);
+
+    const { refreshToken, accessToken } = await createAuthTokens(user.id);
+
+    res.cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: REFRESH_TOKEN_AGE,
+    });
     return res.status(201).json({
       success: true,
       message: AUTH_MESSAGES.USER_CREATED,
+      accessToken,
     });
   } catch (error: any) {
     if (error instanceof ZodError) {
@@ -41,8 +52,19 @@ export const postRegister = async (req: Request, res: Response) => {
 export const postLogin = async (req: Request, res: Response) => {
   try {
     const body = loginSchema.parse(req.body);
-    await loginUser(body);
-    return res.status(201).json({ success: true, message: "User logged in." });
+    const user = await loginUser(body);
+
+    const { refreshToken, accessToken } = await createAuthTokens(user.id);
+    res.cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: REFRESH_TOKEN_AGE,
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "User logged in.", accessToken });
   } catch (error) {
     if (error instanceof ZodError) {
       return res.status(400).json({

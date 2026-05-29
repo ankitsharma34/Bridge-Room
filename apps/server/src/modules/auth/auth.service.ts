@@ -1,9 +1,12 @@
 import { comparePassword, hashPassword } from "../../utils/hash.js";
+import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
+import { hashToken } from "../../utils/token-hash.js";
 import { AUTH_MESSAGES } from "./auth.constants.js";
 import {
   createUser,
   findUserByEmail,
   findUserByUsername,
+  saveRefreshToken,
 } from "./auth.repository.js";
 import type { LoginUserInput, RegisterUserInput } from "./auth.types.js";
 
@@ -42,4 +45,16 @@ export const loginUser = async ({ email, password }: LoginUserInput) => {
   if (!isPasswordMatch) {
     throw new Error(AUTH_MESSAGES.USER_PASSWORD_NOT_MATCH);
   }
+
+  return user;
+};
+
+export const createAuthTokens = async (userId: string) => {
+  const accessToken = generateAccessToken(userId);
+  const refreshToken = generateRefreshToken(userId);
+
+  const hashedRefreshToken = hashToken(refreshToken);
+  await saveRefreshToken({ token: hashedRefreshToken, userId });
+
+  return { accessToken, refreshToken };
 };
