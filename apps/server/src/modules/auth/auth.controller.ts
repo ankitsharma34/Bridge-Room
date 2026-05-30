@@ -124,23 +124,37 @@ export const postRefresh = async (req: Request, res: Response) => {
 };
 
 export const postLogout = async (req: Request, res: Response) => {
-  const refreshToken = req.cookies.refresh_token;
-  if (refreshToken) {
-    await logoutUser(refreshToken);
+  try {
+    const refreshToken = req.cookies.refresh_token;
+    if (refreshToken) {
+      await logoutUser(refreshToken);
+    }
+
+    res.clearCookie("refresh_token");
+
+    return res.status(200).json({
+      success: true,
+      message: "User logged out",
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: AUTH_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
   }
-
-  res.clearCookie("refresh_token");
-
-  return res.status(200).json({
-    success: true,
-    message: "User logged out",
-  });
 };
 
 export const getMe = async (req: Request, res: Response) => {
-  const user = await getCurrentUser(req.user!.userId);
-  return res.json({
-    success: true,
-    user,
-  });
+  try {
+    const user = await getCurrentUser(req.user!.userId);
+    return res.json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: AUTH_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
 };
