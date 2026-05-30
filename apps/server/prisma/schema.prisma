@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -22,6 +17,10 @@ model User {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
+  // Rooms created by this user
+  ownedRooms    Room[]         @relation("RoomOwner")
+  // Rooms joined by this user
+  roomMembers   RoomMember[]
 }
 
 model RefreshToken {
@@ -31,4 +30,31 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Room {
+  id          String       @id @default(cuid())
+  code        String       @unique
+  name        String
+  description String?
+  ownerId     String
+  owner       User         @relation("RoomOwner", fields: [ownerId], references: [id])
+  members     RoomMember[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([ownerId])
+}
+
+model RoomMember {
+  id       String   @id @default(cuid())
+  roomId   String
+  userId   String
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId])
 }
