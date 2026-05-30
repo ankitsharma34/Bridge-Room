@@ -41,3 +41,11 @@ export const findRefreshToken = (token: string) => {
     },
   });
 };
+
+export const deleteRefreshToken = (token: string) => {
+  return prisma.refreshToken.delete({
+    where: {
+      token,
+    },
+  });
+};

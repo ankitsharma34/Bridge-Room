@@ -8,6 +8,7 @@ import { hashToken } from "../../utils/token-hash.js";
 import { AUTH_MESSAGES } from "./auth.constants.js";
 import {
   createUser,
+  deleteRefreshToken,
   findRefreshToken,
   findUserByEmail,
   findUserByUsername,
@@ -81,4 +82,9 @@ export const refreshAccessToken = async (refreshToken: string) => {
 
   // generate new access token
   return generateAccessToken(payload.userId);
+};
+
+export const logoutUser = async (refreshToken: string) => {
+  const hashedToken = hashToken(refreshToken);
+  await deleteRefreshToken(hashedToken);
 };

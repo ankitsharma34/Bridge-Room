@@ -4,6 +4,7 @@ import { loginSchema, registerSchema } from "./auth.schema.js";
 import {
   createAuthTokens,
   loginUser,
+  logoutUser,
   refreshAccessToken,
   registerUser,
 } from "./auth.service.js";
@@ -119,4 +120,18 @@ export const postRefresh = async (req: Request, res: Response) => {
       message: "Invalid refresh token",
     });
   }
+};
+
+export const postLogout = async (req: Request, res: Response) => {
+  const refreshToken = req.cookies.refresh_token;
+  if (refreshToken) {
+    await logoutUser(refreshToken);
+  }
+
+  res.clearCookie("refresh_token");
+
+  return res.status(200).json({
+    success: true,
+    message: "User logged out",
+  });
 };
