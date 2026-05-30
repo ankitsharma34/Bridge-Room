@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { loginSchema, registerSchema } from "./auth.schema.js";
 import {
   createAuthTokens,
+  getCurrentUser,
   loginUser,
   logoutUser,
   refreshAccessToken,
@@ -133,5 +134,13 @@ export const postLogout = async (req: Request, res: Response) => {
   return res.status(200).json({
     success: true,
     message: "User logged out",
+  });
+};
+
+export const getMe = async (req: Request, res: Response) => {
+  const user = await getCurrentUser(req.user!.userId);
+  return res.json({
+    success: true,
+    user,
   });
 };

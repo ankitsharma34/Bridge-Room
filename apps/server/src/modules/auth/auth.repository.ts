@@ -49,3 +49,16 @@ export const deleteRefreshToken = (token: string) => {
     },
   });
 };
+
+export const findUserById = (id: string) => {
+  return prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      avatarUrl: true,
+      createdAt: true,
+    },
+  });
+};

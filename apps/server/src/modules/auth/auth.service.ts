@@ -11,6 +11,7 @@ import {
   deleteRefreshToken,
   findRefreshToken,
   findUserByEmail,
+  findUserById,
   findUserByUsername,
   saveRefreshToken,
 } from "./auth.repository.js";
@@ -87,4 +88,12 @@ export const refreshAccessToken = async (refreshToken: string) => {
 export const logoutUser = async (refreshToken: string) => {
   const hashedToken = hashToken(refreshToken);
   await deleteRefreshToken(hashedToken);
+};
+
+export const getCurrentUser = async (userId: string) => {
+  const user = await findUserById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return user;
 };
