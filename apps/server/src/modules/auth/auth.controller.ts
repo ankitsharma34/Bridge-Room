@@ -1,7 +1,12 @@
 import type { Request, Response } from "express";
 import { ZodError } from "zod";
 import { loginSchema, registerSchema } from "./auth.schema.js";
-import { createAuthTokens, loginUser, registerUser } from "./auth.service.js";
+import {
+  createAuthTokens,
+  loginUser,
+  refreshAccessToken,
+  registerUser,
+} from "./auth.service.js";
 import { AUTH_MESSAGES, REFRESH_TOKEN_AGE } from "./auth.constants.js";
 import { env } from "../../config/env.js";
 
@@ -87,6 +92,31 @@ export const postLogin = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: AUTH_MESSAGES.INTERNAL_SERVER_ERROR,
+    });
+  }
+};
+
+export const postRefresh = async (req: Request, res: Response) => {
+  try {
+    const refreshToken = req.cookies.refresh_token;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token missing",
+      });
+    }
+
+    const accessToken = await refreshAccessToken(refreshToken);
+
+    return res.status(200).json({
+      success: true,
+      accessToken: accessToken,
+    });
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid refresh token",
     });
   }
 };

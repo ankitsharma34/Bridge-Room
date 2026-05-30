@@ -1,9 +1,14 @@
 import { comparePassword, hashPassword } from "../../utils/hash.js";
-import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "../../utils/jwt.js";
 import { hashToken } from "../../utils/token-hash.js";
 import { AUTH_MESSAGES } from "./auth.constants.js";
 import {
   createUser,
+  findRefreshToken,
   findUserByEmail,
   findUserByUsername,
   saveRefreshToken,
@@ -57,4 +62,23 @@ export const createAuthTokens = async (userId: string) => {
   await saveRefreshToken({ token: hashedRefreshToken, userId });
 
   return { accessToken, refreshToken };
+};
+
+export const refreshAccessToken = async (refreshToken: string) => {
+  const payload = verifyRefreshToken(refreshToken);
+  const hashedToken = hashToken(refreshToken);
+
+  // check token exists in db
+  const storedToken = await findRefreshToken(hashedToken);
+  if (!storedToken) {
+    throw new Error("Invalid refresh token");
+  }
+
+  // check expiry
+  if (storedToken.expiresAt < new Date()) {
+    throw new Error("Refresh token expired");
+  }
+
+  // generate new access token
+  return generateAccessToken(payload.userId);
 };

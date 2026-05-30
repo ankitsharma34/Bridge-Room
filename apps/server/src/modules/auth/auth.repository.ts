@@ -33,3 +33,11 @@ export const saveRefreshToken = ({ token, userId }: RefreshTokenPayload) => {
     },
   });
 };
+
+export const findRefreshToken = (token: string) => {
+  return prisma.refreshToken.findUnique({
+    where: {
+      token,
+    },
+  });
+};
