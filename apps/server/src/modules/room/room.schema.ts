@@ -18,7 +18,9 @@ export const joinRoomSchema = z.object({
   code: z
     .string()
     .trim()
-    .min(8)
-    .max(8)
+    .min(8, { message: "Incorrect Room Code" })
+    .max(8, { message: "Incorrect Room Code" })
     .transform((value) => value.toUpperCase()),
 });
+
+export const leaveRoomSchema = joinRoomSchema;

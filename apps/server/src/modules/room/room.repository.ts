@@ -46,3 +46,14 @@ export const joinRoom = (roomId: string, userId: string) => {
     },
   });
 };
+
+export const leaveRoom = (roomId: string, userId: string) => {
+  return prisma.roomMember.delete({
+    where: {
+      roomId_userId: {
+        roomId,
+        userId,
+      },
+    },
+  });
+};
