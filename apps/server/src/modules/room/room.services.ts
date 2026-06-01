@@ -1,4 +1,9 @@
-import { createRoom, findRoomByCode } from "./room.repository.js";
+import {
+  createRoom,
+  findMembership,
+  findRoomByCode,
+  joinRoom,
+} from "./room.repository.js";
 import { CreateRoomInput } from "./room.types.js";
 import { generateRoomCode } from "./room.utils.js";
 
@@ -23,5 +28,20 @@ export const createRoomService = async (
     code,
   );
 
+  return room;
+};
+
+export const joinRoomService = async (userId: string, code: string) => {
+  const room = await findRoomByCode(code);
+  if (!room) {
+    throw new Error("Room not found");
+  }
+
+  const membership = await findMembership(room.id, userId);
+  if (membership) {
+    throw new Error("Already joined this room");
+  }
+
+  await joinRoom(room.id, userId);
   return room;
 };

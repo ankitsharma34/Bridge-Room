@@ -13,3 +13,12 @@ export const createRoomSchema = z.object({
     .max(200, "Description must be at most 200 characters")
     .optional(),
 });
+
+export const joinRoomSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(8)
+    .max(8)
+    .transform((value) => value.toUpperCase()),
+});

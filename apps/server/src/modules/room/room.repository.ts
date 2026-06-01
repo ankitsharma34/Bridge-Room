@@ -26,3 +26,23 @@ export const createRoom = (data: CreateRoomPayload, code: string) => {
     },
   });
 };
+
+export const findMembership = (roomId: string, userId: string) => {
+  return prisma.roomMember.findUnique({
+    where: {
+      roomId_userId: {
+        roomId,
+        userId,
+      },
+    },
+  });
+};
+
+export const joinRoom = (roomId: string, userId: string) => {
+  return prisma.roomMember.create({
+    data: {
+      roomId,
+      userId,
+    },
+  });
+};
