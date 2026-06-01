@@ -4,6 +4,7 @@ import { prisma } from "./prisma/prisma.js";
 import { redis } from "./redis/redis.js";
 import { loggerMiddleware } from "./middleware/logger.middleware.js";
 import authRouter from "./modules/auth/auth.routes.js";
+import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const app = express();
 
@@ -31,4 +32,7 @@ app.get("/api/health", async (req: Request, res: Response) => {
     redis: "connected",
   });
 });
+
+// error-middleware
+app.use(errorMiddleware);
 export default app;
