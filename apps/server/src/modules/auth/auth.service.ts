@@ -1,3 +1,4 @@
+import { AppError } from "../../utils/app-error.js";
 import { comparePassword, hashPassword } from "../../utils/hash.js";
 import {
   generateAccessToken,
@@ -24,12 +25,12 @@ export const registerUser = async ({
 }: RegisterUserInput) => {
   const isEmailExists = await findUserByEmail(email);
   if (isEmailExists) {
-    throw new Error(AUTH_MESSAGES.EMAIL_EXISTS);
+    throw new AppError(AUTH_MESSAGES.EMAIL_EXISTS, 409);
   }
 
   const isUsernameExists = await findUserByUsername(username);
   if (isUsernameExists) {
-    throw new Error(AUTH_MESSAGES.USERNAME_EXISTS);
+    throw new AppError(AUTH_MESSAGES.USERNAME_EXISTS, 409);
   }
 
   const passwordHash = await hashPassword(password);
@@ -46,11 +47,11 @@ export const registerUser = async ({
 export const loginUser = async ({ email, password }: LoginUserInput) => {
   const user = await findUserByEmail(email);
   if (!user) {
-    throw new Error(AUTH_MESSAGES.USER_NOT_EXISTS);
+    throw new AppError(AUTH_MESSAGES.USER_NOT_EXISTS, 404);
   }
   const isPasswordMatch = await comparePassword(password, user.password);
   if (!isPasswordMatch) {
-    throw new Error(AUTH_MESSAGES.USER_PASSWORD_NOT_MATCH);
+    throw new AppError(AUTH_MESSAGES.USER_PASSWORD_NOT_MATCH, 401);
   }
 
   return user;
@@ -73,12 +74,12 @@ export const refreshAccessToken = async (refreshToken: string) => {
   // check token exists in db
   const storedToken = await findRefreshToken(hashedToken);
   if (!storedToken) {
-    throw new Error("Invalid refresh token");
+    throw new AppError("Invalid refresh token", 401);
   }
 
   // check expiry
   if (storedToken.expiresAt < new Date()) {
-    throw new Error("Refresh token expired");
+    throw new AppError("Refresh token expired", 401);
   }
 
   // generate new access token
@@ -93,7 +94,7 @@ export const logoutUser = async (refreshToken: string) => {
 export const getCurrentUser = async (userId: string) => {
   const user = await findUserById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found", 404);
   }
   return user;
 };

@@ -13,114 +13,57 @@ import { AUTH_MESSAGES, REFRESH_TOKEN_AGE } from "./auth.constants.js";
 import { env } from "../../config/env.js";
 
 export const postRegister = async (req: Request, res: Response) => {
-  try {
-    const body = registerSchema.parse(req.body);
-    const user = await registerUser(body);
+  const body = registerSchema.parse(req.body);
+  const user = await registerUser(body);
 
-    const { refreshToken, accessToken } = await createAuthTokens(user.id);
+  const { refreshToken, accessToken } = await createAuthTokens(user.id);
 
-    res.cookie("refresh_token", refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: REFRESH_TOKEN_AGE,
-    });
-    return res.status(201).json({
-      success: true,
-      message: AUTH_MESSAGES.USER_CREATED,
-      accessToken,
-    });
-  } catch (error: any) {
-    if (error instanceof ZodError) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation Error",
-        errors: error.issues.map((err: any) => ({
-          field: err.path[0],
-          message: err.message,
-        })),
-      });
-    }
-
-    if (error instanceof Error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: AUTH_MESSAGES.INTERNAL_SERVER_ERROR,
-    });
-  }
+  res.cookie("refresh_token", refreshToken, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: REFRESH_TOKEN_AGE,
+  });
+  return res.status(201).json({
+    success: true,
+    message: AUTH_MESSAGES.USER_CREATED,
+    accessToken,
+  });
 };
 
 export const postLogin = async (req: Request, res: Response) => {
-  try {
-    const body = loginSchema.parse(req.body);
-    const user = await loginUser(body);
+  const body = loginSchema.parse(req.body);
+  const user = await loginUser(body);
 
-    const { refreshToken, accessToken } = await createAuthTokens(user.id);
-    res.cookie("refresh_token", refreshToken, {
-      httpOnly: true,
-      secure: env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: REFRESH_TOKEN_AGE,
-    });
+  const { refreshToken, accessToken } = await createAuthTokens(user.id);
+  res.cookie("refresh_token", refreshToken, {
+    httpOnly: true,
+    secure: env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: REFRESH_TOKEN_AGE,
+  });
 
-    return res
-      .status(200)
-      .json({ success: true, message: "User logged in.", accessToken });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation Error",
-        errors: error.issues.map((err: any) => ({
-          field: err.path[0],
-          message: err.message,
-        })),
-      });
-    }
-
-    if (error instanceof Error) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: AUTH_MESSAGES.INTERNAL_SERVER_ERROR,
-    });
-  }
+  return res
+    .status(200)
+    .json({ success: true, message: "User logged in.", accessToken });
 };
 
 export const postRefresh = async (req: Request, res: Response) => {
-  try {
-    const refreshToken = req.cookies.refresh_token;
+  const refreshToken = req.cookies.refresh_token;
 
-    if (!refreshToken) {
-      return res.status(401).json({
-        success: false,
-        message: "Refresh token missing",
-      });
-    }
-
-    const accessToken = await refreshAccessToken(refreshToken);
-
-    return res.status(200).json({
-      success: true,
-      accessToken: accessToken,
-    });
-  } catch (error) {
+  if (!refreshToken) {
     return res.status(401).json({
       success: false,
-      message: "Invalid refresh token",
+      message: "Refresh token missing",
     });
   }
+
+  const accessToken = await refreshAccessToken(refreshToken);
+
+  return res.status(200).json({
+    success: true,
+    accessToken: accessToken,
+  });
 };
 
 export const postLogout = async (req: Request, res: Response) => {
@@ -145,16 +88,9 @@ export const postLogout = async (req: Request, res: Response) => {
 };
 
 export const getMe = async (req: Request, res: Response) => {
-  try {
-    const user = await getCurrentUser(req.user!.userId);
-    return res.json({
-      success: true,
-      user,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: AUTH_MESSAGES.INTERNAL_SERVER_ERROR,
-    });
-  }
+  const user = await getCurrentUser(req.user!.userId);
+  return res.json({
+    success: true,
+    user,
+  });
 };
