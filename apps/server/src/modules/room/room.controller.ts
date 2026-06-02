@@ -1,11 +1,13 @@
 import type { Request, Response } from "express";
 import {
   createRoomSchema,
+  getRoomByIdSchema,
   joinRoomSchema,
   leaveRoomSchema,
 } from "./room.schema.js";
 import {
   createRoomService,
+  getRoomByIdService,
   joinRoomService,
   leaveRoomService,
 } from "./room.services.js";
@@ -100,6 +102,41 @@ export const postLeaveRoom = async (req: Request, res: Response) => {
       success: true,
       message: "Room left successfully",
     });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error",
+        errors: error.issues.map((err: any) => ({
+          field: err.path[0],
+          message: err.message,
+        })),
+      });
+    }
+
+    if (error instanceof Error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const getRoomById = async (req: Request, res: Response) => {
+  try {
+    const { roomId } = getRoomByIdSchema.parse(req.params);
+
+    const room = await getRoomByIdService(req.user!.userId, roomId);
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Room detail fetched", room });
   } catch (error) {
     if (error instanceof ZodError) {
       return res.status(400).json({

@@ -24,3 +24,9 @@ export const joinRoomSchema = z.object({
 });
 
 export const leaveRoomSchema = joinRoomSchema;
+
+export const getRoomByIdSchema = z.object({
+  roomId: z.cuid2({
+    message: "Invalid Room ID.",
+  }),
+});

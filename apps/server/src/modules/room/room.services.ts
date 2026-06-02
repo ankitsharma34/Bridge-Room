@@ -1,7 +1,10 @@
 import {
   createRoom,
+  findMemberCountById,
   findMembership,
   findRoomByCode,
+  findRoomById,
+  findUserById,
   joinRoom,
   leaveRoom,
 } from "./room.repository.js";
@@ -68,4 +71,37 @@ export const leaveRoomService = async (userId: string, code: string) => {
   // leave room
   await leaveRoom(room.id, userId);
   return room;
+};
+
+export const getRoomByIdService = async (userId: string, roomId: string) => {
+  // Room exists?
+  const room = await findRoomById(roomId);
+  if (!room) {
+    throw new Error("Room not found");
+  }
+  // Is user a member?
+  const membership = await findMembership(roomId, userId);
+  if (!membership) {
+    throw new Error("You are not a member. Access denied");
+  }
+
+  // fetch owner detail
+  const owner = await findUserById(room.ownerId);
+  // fetch number of members
+  const memberCount = await findMemberCountById(roomId);
+
+  return {
+    id: room.id,
+    code: room.code,
+    name: room.name,
+    description: room.description,
+    owner: {
+      id: owner!.id,
+      username: owner!.username,
+      avatarUrl: owner!.avatarUrl,
+    },
+    memberCount,
+    createdAt: room.createdAt,
+    updatedAt: room.updatedAt,
+  };
 };

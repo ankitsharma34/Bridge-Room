@@ -57,3 +57,27 @@ export const leaveRoom = (roomId: string, userId: string) => {
     },
   });
 };
+
+export const findRoomById = (roomId: string) => {
+  return prisma.room.findUnique({
+    where: {
+      id: roomId,
+    },
+  });
+};
+
+export const findUserById = (userId: string) => {
+  return prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+};
+
+export const findMemberCountById = (roomId: string) => {
+  return prisma.roomMember.count({
+    where: {
+      roomId,
+    },
+  });
+};
