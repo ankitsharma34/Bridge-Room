@@ -4,6 +4,7 @@ import { prisma } from "./prisma/prisma.js";
 import { redis } from "./redis/redis.js";
 import { loggerMiddleware } from "./middleware/logger.middleware.js";
 import authRouter from "./modules/auth/auth.routes.js";
+import roomRouter from "./modules/room/room.routes.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(loggerMiddleware);
 
 // API endpoints
 app.use("/api/auth", authRouter);
+app.use("/api/rooms", roomRouter);
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
