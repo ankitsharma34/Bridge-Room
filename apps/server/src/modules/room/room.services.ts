@@ -5,6 +5,7 @@ import {
   findMembership,
   findRoomByCode,
   findRoomById,
+  findRoomMember,
   findUserById,
   joinRoom,
   leaveRoom,
@@ -104,5 +105,34 @@ export const getRoomByIdService = async (userId: string, roomId: string) => {
     memberCount,
     createdAt: room.createdAt,
     updatedAt: room.updatedAt,
+  };
+};
+
+export const getRoomMembersService = async (userId: string, roomId: string) => {
+  const room = await findRoomById(roomId);
+  // Room exists?
+  if (!room) {
+    throw new AppError("Room not found", 404);
+  }
+
+  // Is requester a member?
+  const membership = await findMembership(roomId, userId);
+  if (!membership) {
+    throw new AppError("Access denied. You are not a member", 403);
+  }
+
+  // Fetch all RoomMembers
+  const roomMembers = await findRoomMember(roomId);
+
+  return {
+    memberCount: roomMembers.length,
+    members: roomMembers.map((member) => ({
+      id: member.user.id,
+      username: member.user.username,
+      avatarUrl: member.user.avatarUrl,
+      isVerified: member.user.isVerified,
+      role: member.userId === room.ownerId ? "OWNER" : "MEMBER",
+      joinedAt: member.joinedAt,
+    })),
   };
 };

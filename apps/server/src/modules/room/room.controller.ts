@@ -8,6 +8,7 @@ import {
 import {
   createRoomService,
   getRoomByIdService,
+  getRoomMembersService,
   joinRoomService,
   leaveRoomService,
 } from "./room.services.js";
@@ -61,4 +62,18 @@ export const getRoomById = async (req: Request, res: Response) => {
   return res
     .status(200)
     .json({ success: true, message: "Room detail fetched", room });
+};
+
+export const getRoomMembers = async (req: Request, res: Response) => {
+  // Validate roomId
+  const { roomId } = getRoomByIdSchema.parse(req.params);
+
+  const serviceDTO = await getRoomMembersService(req.user!.userId, roomId);
+
+  return res.status(200).json({
+    success: true,
+    roomId,
+    memberCount: serviceDTO.memberCount,
+    members: serviceDTO.members,
+  });
 };

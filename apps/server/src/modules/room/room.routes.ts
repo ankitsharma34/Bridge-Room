@@ -2,6 +2,7 @@ import { Router } from "express";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
 import {
   getRoomById,
+  getRoomMembers,
   postCreateRoom,
   postJoinRoom,
   postLeaveRoom,
@@ -13,5 +14,6 @@ router.post("/join", authMiddleware, postJoinRoom);
 router.post("/leave", authMiddleware, postLeaveRoom);
 
 router.get("/:roomId", authMiddleware, getRoomById);
+router.get("/:roomId/members", authMiddleware, getRoomMembers);
 
 export default router;

@@ -81,3 +81,10 @@ export const findMemberCountById = (roomId: string) => {
     },
   });
 };
+
+export const findRoomMember = (roomId: string) => {
+  return prisma.roomMember.findMany({
+    where: { roomId },
+    include: { user: true },
+  });
+};
