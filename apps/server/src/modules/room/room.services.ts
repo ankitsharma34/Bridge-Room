@@ -7,6 +7,7 @@ import {
   findRoomById,
   findRoomMember,
   findUserById,
+  findUserRooms,
   joinRoom,
   leaveRoom,
 } from "./room.repository.js";
@@ -133,6 +134,25 @@ export const getRoomMembersService = async (userId: string, roomId: string) => {
       isVerified: member.user.isVerified,
       role: member.userId === room.ownerId ? "OWNER" : "MEMBER",
       joinedAt: member.joinedAt,
+    })),
+  };
+};
+
+export const getMyRoomsService = async (userId: string) => {
+  const allRooms = await findUserRooms(userId);
+
+  return {
+    totalRooms: allRooms.length,
+
+    rooms: allRooms.map((room) => ({
+      id: room.id,
+      code: room.code,
+      name: room.name,
+      description: room.description,
+      role: room.ownerId === userId ? "OWNER" : "MEMBER",
+      memberCount: room._count.members,
+      createdAt: room.createdAt,
+      updatedAt: room.updatedAt,
     })),
   };
 };

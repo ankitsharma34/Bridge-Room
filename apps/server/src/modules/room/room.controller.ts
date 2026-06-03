@@ -7,6 +7,7 @@ import {
 } from "./room.schema.js";
 import {
   createRoomService,
+  getMyRoomsService,
   getRoomByIdService,
   getRoomMembersService,
   joinRoomService,
@@ -76,4 +77,9 @@ export const getRoomMembers = async (req: Request, res: Response) => {
     memberCount: serviceDTO.memberCount,
     members: serviceDTO.members,
   });
+};
+
+export const getMyRooms = async (req: Request, res: Response) => {
+  const allRooms = await getMyRoomsService(req.user!.userId);
+  return res.status(200).json({ success: true, ...allRooms });
 };
