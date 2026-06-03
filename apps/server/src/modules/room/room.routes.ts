@@ -4,6 +4,7 @@ import {
   getMyRooms,
   getRoomById,
   getRoomMembers,
+  patchUpdateRoom,
   postCreateRoom,
   postJoinRoom,
   postLeaveRoom,
@@ -18,4 +19,5 @@ router.get("/my-rooms", authMiddleware, getMyRooms); // keep static route before
 router.get("/:roomId", authMiddleware, getRoomById);
 router.get("/:roomId/members", authMiddleware, getRoomMembers);
 
+router.patch("/:roomId", authMiddleware, patchUpdateRoom);
 export default router;

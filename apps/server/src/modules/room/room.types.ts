@@ -1,5 +1,9 @@
 import z from "zod";
-import { createRoomSchema, joinRoomSchema } from "./room.schema.js";
+import {
+  createRoomSchema,
+  joinRoomSchema,
+  updateRoomSchema,
+} from "./room.schema.js";
 
 export interface CreateRoomPayload {
   name: string;
@@ -14,3 +18,9 @@ export interface JoinRoomPayload {
   userId: string;
 }
 export type JoinRoomInput = z.infer<typeof joinRoomSchema>;
+
+export interface UpdateRoomInput {
+  roomId: string;
+  name?: string | undefined;
+  description?: string | null | undefined;
+}

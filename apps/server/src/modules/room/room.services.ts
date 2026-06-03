@@ -10,8 +10,9 @@ import {
   findUserRooms,
   joinRoom,
   leaveRoom,
+  updateRoom,
 } from "./room.repository.js";
-import { CreateRoomInput } from "./room.types.js";
+import { CreateRoomInput, UpdateRoomInput } from "./room.types.js";
 import { generateRoomCode } from "./room.utils.js";
 
 export const createRoomService = async (
@@ -155,4 +156,25 @@ export const getMyRoomsService = async (userId: string) => {
       updatedAt: room.updatedAt,
     })),
   };
+};
+
+export const updateRoomService = async (
+  userId: string,
+  { roomId, name, description }: UpdateRoomInput,
+) => {
+  // Find Room By Id
+  const room = await findRoomById(roomId);
+  // Room Exists?
+  if (!room) {
+    throw new AppError("Room not found", 404);
+  }
+
+  // Is Owner?
+  if (room.ownerId !== userId) {
+    throw new AppError("You are now allowed to edit the room detail.", 403);
+  }
+
+  const updatedRoom = await updateRoom({ roomId, name, description });
+
+  return updatedRoom;
 };

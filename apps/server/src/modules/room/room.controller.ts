@@ -4,6 +4,7 @@ import {
   getRoomByIdSchema,
   joinRoomSchema,
   leaveRoomSchema,
+  updateRoomSchema,
 } from "./room.schema.js";
 import {
   createRoomService,
@@ -12,6 +13,7 @@ import {
   getRoomMembersService,
   joinRoomService,
   leaveRoomService,
+  updateRoomService,
 } from "./room.services.js";
 import { ZodError } from "zod";
 
@@ -82,4 +84,21 @@ export const getRoomMembers = async (req: Request, res: Response) => {
 export const getMyRooms = async (req: Request, res: Response) => {
   const allRooms = await getMyRoomsService(req.user!.userId);
   return res.status(200).json({ success: true, ...allRooms });
+};
+
+export const patchUpdateRoom = async (req: Request, res: Response) => {
+  // Validate Params
+  const { roomId } = getRoomByIdSchema.parse(req.params);
+  // Validate Body
+  const body = updateRoomSchema.parse(req.body);
+
+  const room = await updateRoomService(req.user!.userId, {
+    roomId,
+    name: body.name,
+    description: body.description,
+  });
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Room updated successfully", room });
 };

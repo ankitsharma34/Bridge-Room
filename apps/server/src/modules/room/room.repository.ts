@@ -1,5 +1,5 @@
 import { prisma } from "../../prisma/prisma.js";
-import type { CreateRoomPayload } from "./room.types.js";
+import type { CreateRoomPayload, UpdateRoomInput } from "./room.types.js";
 
 export const findRoomByCode = (code: string) => {
   return prisma.room.findUnique({
@@ -107,6 +107,18 @@ export const findUserRooms = (userId: string) => {
     },
     orderBy: {
       updatedAt: "desc",
+    },
+  });
+};
+
+export const updateRoom = ({ roomId, name, description }: UpdateRoomInput) => {
+  return prisma.room.update({
+    where: {
+      id: roomId,
+    },
+    data: {
+      ...(name !== undefined && { name }),
+      ...(description !== undefined && { description }),
     },
   });
 };
