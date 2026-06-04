@@ -4,6 +4,7 @@ import {
   getRoomByIdSchema,
   joinRoomSchema,
   leaveRoomSchema,
+  removeMemberSchema,
   updateRoomSchema,
 } from "./room.schema.js";
 import {
@@ -13,6 +14,7 @@ import {
   getRoomMembersService,
   joinRoomService,
   leaveRoomService,
+  removeMemberService,
   updateRoomService,
 } from "./room.services.js";
 import { ZodError } from "zod";
@@ -101,4 +103,15 @@ export const patchUpdateRoom = async (req: Request, res: Response) => {
   return res
     .status(200)
     .json({ success: true, message: "Room updated successfully", room });
+};
+
+export const deleteRemoveMember = async (req: Request, res: Response) => {
+  // Validate roomId
+  const { roomId, memberId } = removeMemberSchema.parse(req.params);
+
+  const member = await removeMemberService(req.user!.userId, roomId, memberId);
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Member removed successfully", member });
 };

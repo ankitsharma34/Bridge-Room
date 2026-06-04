@@ -45,3 +45,12 @@ export const updateRoomSchema = z.object({
     .max(200, "Description must be at most 200 characters")
     .optional(),
 });
+
+export const removeMemberSchema = z.object({
+  roomId: z.cuid2({
+    message: "Invalid Room ID.",
+  }),
+  memberId: z.cuid2({
+    message: "Invalid Member ID.",
+  }),
+});

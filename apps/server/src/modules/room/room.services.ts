@@ -1,6 +1,7 @@
 import { AppError } from "../../utils/app-error.js";
 import {
   createRoom,
+  deleteRoomMember,
   findMemberCountById,
   findMembership,
   findRoomByCode,
@@ -177,4 +178,41 @@ export const updateRoomService = async (
   const updatedRoom = await updateRoom({ roomId, name, description });
 
   return updatedRoom;
+};
+
+export const removeMemberService = async (
+  userId: string,
+  roomId: string,
+  memberId: string,
+) => {
+  // Find Room
+  const room = await findRoomById(roomId);
+  // Room Exists?
+  if (!room) {
+    throw new AppError("Room not found", 404);
+  }
+
+  // Is Requester Owner?
+  if (userId !== room.ownerId) {
+    throw new AppError("You are not allowed to remove the member.", 403);
+  }
+
+  // Target belongs to room?
+  const membership = await findMembership(roomId, memberId);
+  if (!membership) {
+    throw new AppError("Member not found in the room", 404);
+  }
+
+  // Target is Owner?
+  if (memberId === room.ownerId) {
+    throw new AppError("Owner cannot be kicked", 400);
+  }
+  // Is Target Self?
+  if (memberId === userId) {
+    throw new AppError("Use leave room or delete room instead", 400);
+  }
+
+  const deletedMember = await deleteRoomMember(roomId, memberId);
+
+  return deletedMember;
 };

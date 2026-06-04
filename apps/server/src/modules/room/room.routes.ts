@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
 import {
+  deleteRemoveMember,
   getMyRooms,
   getRoomById,
   getRoomMembers,
@@ -20,4 +21,6 @@ router.get("/:roomId", authMiddleware, getRoomById);
 router.get("/:roomId/members", authMiddleware, getRoomMembers);
 
 router.patch("/:roomId", authMiddleware, patchUpdateRoom);
+
+router.delete("/:roomId/members/:memberId", authMiddleware, deleteRemoveMember);
 export default router;

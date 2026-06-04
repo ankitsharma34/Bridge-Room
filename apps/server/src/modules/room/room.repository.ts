@@ -122,3 +122,14 @@ export const updateRoom = ({ roomId, name, description }: UpdateRoomInput) => {
     },
   });
 };
+
+export const deleteRoomMember = (roomId: string, memberId: string) => {
+  return prisma.roomMember.delete({
+    where: {
+      roomId_userId: {
+        roomId,
+        userId: memberId,
+      },
+    },
+  });
+};
