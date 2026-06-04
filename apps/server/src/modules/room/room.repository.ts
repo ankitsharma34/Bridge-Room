@@ -133,3 +133,11 @@ export const deleteRoomMember = (roomId: string, memberId: string) => {
     },
   });
 };
+
+export const deleteRoom = (roomId: string) => {
+  return prisma.room.delete({
+    where: {
+      id: roomId,
+    },
+  });
+};

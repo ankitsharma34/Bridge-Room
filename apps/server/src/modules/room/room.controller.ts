@@ -9,6 +9,7 @@ import {
 } from "./room.schema.js";
 import {
   createRoomService,
+  deleteRoomService,
   getMyRoomsService,
   getRoomByIdService,
   getRoomMembersService,
@@ -114,4 +115,15 @@ export const deleteRemoveMember = async (req: Request, res: Response) => {
   return res
     .status(200)
     .json({ success: true, message: "Member removed successfully", member });
+};
+
+export const deleteMyRoom = async (req: Request, res: Response) => {
+  // Validate roomId
+  const { roomId } = getRoomByIdSchema.parse(req.params);
+
+  const room = await deleteRoomService(req.user!.userId, roomId);
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Room deleted successfully", room });
 };

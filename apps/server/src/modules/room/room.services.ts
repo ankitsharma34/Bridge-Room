@@ -1,6 +1,7 @@
 import { AppError } from "../../utils/app-error.js";
 import {
   createRoom,
+  deleteRoom,
   deleteRoomMember,
   findMemberCountById,
   findMembership,
@@ -215,4 +216,21 @@ export const removeMemberService = async (
   const deletedMember = await deleteRoomMember(roomId, memberId);
 
   return deletedMember;
+};
+
+export const deleteRoomService = async (userId: string, roomId: string) => {
+  // Find Room
+  const room = await findRoomById(roomId);
+  // Room Exists?
+  if (!room) {
+    throw new AppError("Room not found", 404);
+  }
+
+  // Is Requester Owner?
+  if (userId !== room.ownerId) {
+    throw new AppError("Only room owner can delete the room", 403);
+  }
+
+  const deletedRoom = await deleteRoom(roomId);
+  return deletedRoom;
 };
