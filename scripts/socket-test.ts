@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 console.log("Starting socket test...");
 
 const ACCESS_TOKEN =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbXBvZW1kcTgwMDAwbTBqZTRvbXJqdnRiIiwiaWF0IjoxNzgwNzY5NDc4LCJleHAiOjE3ODA3NzAzNzh9.Sun2DQCsG87W-xjY0VOcy6W1cKw7YX_-8ZFK469fBl4";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbXBvZW1kcTgwMDAwbTBqZTRvbXJqdnRiIiwiaWF0IjoxNzgwODQ2MzUxLCJleHAiOjE3ODA4NDcyNTF9.yqOaHj_Z4dm_M7U2X3p9JitbWJTmtVdp3eueEq1h0Xk";
 
 const socket = io("http://localhost:5000", {
   auth: {
