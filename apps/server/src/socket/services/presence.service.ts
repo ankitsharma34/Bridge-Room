@@ -13,4 +13,5 @@ export const markUserOffline = async (userId: string, socketId: string) => {
   if (remainingSockets === 0) {
     await redis.del(key);
   }
+  return remainingSockets;
 };
