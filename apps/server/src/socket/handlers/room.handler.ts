@@ -8,6 +8,10 @@ import {
   getActiveRoom,
   setActiveRoom,
 } from "../services/active-room.service.js";
+import {
+  addUserToRoomPresence,
+  removeUserFromRoomPresence,
+} from "../services/room-presence.service.js";
 import { AuthenticatedSocket } from "../types/socket.types.js";
 
 export const roomHandler = (socket: AuthenticatedSocket) => {
@@ -31,10 +35,15 @@ export const roomHandler = (socket: AuthenticatedSocket) => {
     }
     if (previousRoomId) {
       // 4. exists?? Leave previous room
+      //   Remove User From Previous Room Presence
+      await removeUserFromRoomPresence(previousRoomId, socket.userId!);
       socket.leave(previousRoomId);
     }
-    // 5. Join new room and set active room in Redis
+    // 5. set active room in Redis
     await setActiveRoom(socket.userId!, roomId);
+    // Add User To New Room Presence
+    await addUserToRoomPresence(roomId, socket.userId!);
+
     socket.join(roomId);
     socket.emit(SERVER_EVENTS.ACTIVE_ROOM_JOINED, roomId);
   });
@@ -44,6 +53,8 @@ export const roomHandler = (socket: AuthenticatedSocket) => {
     const roomId = await getActiveRoom(socket.userId!);
     if (roomId) {
       // 2. Leave room and clear active room in Redis
+      //   Remove User From Room Presence
+      await removeUserFromRoomPresence(roomId, socket.userId!);
       socket.leave(roomId);
       await clearActiveRoom(socket.userId!);
     }

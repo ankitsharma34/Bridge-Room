@@ -6,6 +6,7 @@ import {
   markUserOnline,
   markUserOffline,
 } from "../services/presence.service.js";
+import { removeUserFromRoomPresence } from "../services/room-presence.service.js";
 
 import type { AuthenticatedSocket } from "../types/socket.types.js";
 import { roomHandler } from "./room.handler.js";
@@ -24,6 +25,8 @@ export const connectionHandler = async (socket: AuthenticatedSocket) => {
       // User is completely offline, clear their active room
       const activeRoomId = await getActiveRoom(userId);
       if (activeRoomId) {
+        // Remove User From Room Presence
+        await removeUserFromRoomPresence(activeRoomId, userId);
         await clearActiveRoom(userId);
         socket.leave(activeRoomId);
       }
