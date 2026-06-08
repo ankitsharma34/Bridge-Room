@@ -12,5 +12,8 @@ export const SERVER_EVENTS = {
 
   ROOM_PRESENCE_UPDATED: "room_presence:updated",
 
+  MEMBER_JOINED_ROOM: "room:member_joined",
+  MEMBER_LEFT_ROOM: "room:member_left",
+
   ERROR: "error",
 };

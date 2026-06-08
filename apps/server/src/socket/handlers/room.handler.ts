@@ -1,6 +1,7 @@
 import {
   findMembership,
   findRoomById,
+  findUserById,
 } from "../../modules/room/room.repository.js";
 import { CLIENT_EVENTS, SERVER_EVENTS } from "../events/socket.events.js";
 import {
@@ -13,6 +14,10 @@ import {
   removeUserFromRoomPresence,
 } from "../services/room-presence.service.js";
 import { AuthenticatedSocket } from "../types/socket.types.js";
+import {
+  broadcastMemberJoinedRoom,
+  broadcastMemberLeftRoom,
+} from "../utils/broadcast-room-member.js";
 import { broadcastRoomPresence } from "../utils/broadcast-room-presence.js";
 
 export const roomHandler = (socket: AuthenticatedSocket) => {
@@ -39,7 +44,7 @@ export const roomHandler = (socket: AuthenticatedSocket) => {
       //   Remove User From Previous Room Presence
       await removeUserFromRoomPresence(previousRoomId, socket.userId!);
       socket.leave(previousRoomId);
-      await broadcastRoomPresence(roomId);
+      await broadcastRoomPresence(previousRoomId);
     }
     // 5. set active room in Redis
     await setActiveRoom(socket.userId!, roomId);
@@ -47,6 +52,18 @@ export const roomHandler = (socket: AuthenticatedSocket) => {
     await addUserToRoomPresence(roomId, socket.userId!);
 
     socket.join(roomId);
+    // 6. Broadcast to other members that user has joined
+    const user = await findUserById(socket.userId!);
+    if (!user) {
+      socket.emit(SERVER_EVENTS.ERROR, "User not found");
+      return;
+    }
+    broadcastMemberJoinedRoom(roomId, {
+      id: user.id,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+    });
+    // 7. Broadcast updated room presence to members
     await broadcastRoomPresence(roomId);
     socket.emit(SERVER_EVENTS.ACTIVE_ROOM_JOINED, roomId);
   });
@@ -59,6 +76,19 @@ export const roomHandler = (socket: AuthenticatedSocket) => {
       //   Remove User From Room Presence
       await removeUserFromRoomPresence(roomId, socket.userId!);
       socket.leave(roomId);
+
+      // Broadcast to other members that user has left
+      const user = await findUserById(socket.userId!);
+      if (!user) {
+        socket.emit(SERVER_EVENTS.ERROR, "User not found");
+        return;
+      }
+      broadcastMemberLeftRoom(roomId, {
+        id: user.id,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+      });
+      // Broadcast updated room presence to remaining members
       await broadcastRoomPresence(roomId);
       await clearActiveRoom(socket.userId!);
     }

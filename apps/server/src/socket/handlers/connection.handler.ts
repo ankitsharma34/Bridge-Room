@@ -1,3 +1,5 @@
+import { findUserById } from "../../modules/room/room.repository.js";
+import { SERVER_EVENTS } from "../events/socket.events.js";
 import {
   clearActiveRoom,
   getActiveRoom,
@@ -9,6 +11,7 @@ import {
 import { removeUserFromRoomPresence } from "../services/room-presence.service.js";
 
 import type { AuthenticatedSocket } from "../types/socket.types.js";
+import { broadcastMemberLeftRoom } from "../utils/broadcast-room-member.js";
 import { broadcastRoomPresence } from "../utils/broadcast-room-presence.js";
 import { roomHandler } from "./room.handler.js";
 
@@ -30,6 +33,18 @@ export const connectionHandler = async (socket: AuthenticatedSocket) => {
         await removeUserFromRoomPresence(activeRoomId, userId);
         await clearActiveRoom(userId);
         socket.leave(activeRoomId);
+        // Broadcast to other members that user has left
+        const user = await findUserById(userId);
+        if (!user) {
+          socket.emit(SERVER_EVENTS.ERROR, "User not found");
+          return;
+        }
+        broadcastMemberLeftRoom(activeRoomId, {
+          id: user.id,
+          username: user.username,
+          avatarUrl: user.avatarUrl,
+        });
+        // Broadcast updated room presence to remaining members
         await broadcastRoomPresence(activeRoomId);
       }
     }
