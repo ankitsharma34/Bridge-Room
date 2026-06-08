@@ -13,6 +13,7 @@ import {
   removeUserFromRoomPresence,
 } from "../services/room-presence.service.js";
 import { AuthenticatedSocket } from "../types/socket.types.js";
+import { broadcastRoomPresence } from "../utils/broadcast-room-presence.js";
 
 export const roomHandler = (socket: AuthenticatedSocket) => {
   socket.on(CLIENT_EVENTS.ACTIVE_ROOM_JOIN, async (roomId: string) => {
@@ -38,6 +39,7 @@ export const roomHandler = (socket: AuthenticatedSocket) => {
       //   Remove User From Previous Room Presence
       await removeUserFromRoomPresence(previousRoomId, socket.userId!);
       socket.leave(previousRoomId);
+      await broadcastRoomPresence(roomId);
     }
     // 5. set active room in Redis
     await setActiveRoom(socket.userId!, roomId);
@@ -45,6 +47,7 @@ export const roomHandler = (socket: AuthenticatedSocket) => {
     await addUserToRoomPresence(roomId, socket.userId!);
 
     socket.join(roomId);
+    await broadcastRoomPresence(roomId);
     socket.emit(SERVER_EVENTS.ACTIVE_ROOM_JOINED, roomId);
   });
 
@@ -56,6 +59,7 @@ export const roomHandler = (socket: AuthenticatedSocket) => {
       //   Remove User From Room Presence
       await removeUserFromRoomPresence(roomId, socket.userId!);
       socket.leave(roomId);
+      await broadcastRoomPresence(roomId);
       await clearActiveRoom(socket.userId!);
     }
     socket.emit(SERVER_EVENTS.ACTIVE_ROOM_LEFT, roomId);

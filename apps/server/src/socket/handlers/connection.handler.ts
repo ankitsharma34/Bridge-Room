@@ -9,6 +9,7 @@ import {
 import { removeUserFromRoomPresence } from "../services/room-presence.service.js";
 
 import type { AuthenticatedSocket } from "../types/socket.types.js";
+import { broadcastRoomPresence } from "../utils/broadcast-room-presence.js";
 import { roomHandler } from "./room.handler.js";
 
 export const connectionHandler = async (socket: AuthenticatedSocket) => {
@@ -29,6 +30,7 @@ export const connectionHandler = async (socket: AuthenticatedSocket) => {
         await removeUserFromRoomPresence(activeRoomId, userId);
         await clearActiveRoom(userId);
         socket.leave(activeRoomId);
+        await broadcastRoomPresence(activeRoomId);
       }
     }
     console.log(`User ${userId} disconnected from socket ${socket.id}`);
