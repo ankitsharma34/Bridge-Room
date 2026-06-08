@@ -21,6 +21,7 @@ model User {
   ownedRooms    Room[]         @relation("RoomOwner")
   // Rooms joined by this user
   roomMembers   RoomMember[]
+  messages      Message[]
 }
 
 model RefreshToken {
@@ -42,6 +43,7 @@ model Room {
   members     RoomMember[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+  messages    Message[]
 
   @@index([ownerId])
 }
@@ -57,4 +59,20 @@ model RoomMember {
   @@unique([roomId, userId])
   @@index([roomId])
   @@index([userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  roomId    String
+  senderId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room   Room @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([roomId])
+  @@index([senderId])
+  @@index([roomId, createdAt])
 }
