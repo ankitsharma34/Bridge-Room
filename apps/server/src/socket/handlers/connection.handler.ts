@@ -9,12 +9,15 @@ import {
   markUserOffline,
 } from "../services/presence.service.js";
 import { removeUserFromRoomPresence } from "../services/room-presence.service.js";
+import { removeTypingUser } from "../services/typing.service.js";
 
 import type { AuthenticatedSocket } from "../types/socket.types.js";
 import { broadcastMemberLeftRoom } from "../utils/broadcast-room-member.js";
 import { broadcastRoomPresence } from "../utils/broadcast-room-presence.js";
+import { broadcastTyping } from "../utils/broadcast-typing.js";
 import { chatHandler } from "./chat.handler.js";
 import { roomHandler } from "./room.handler.js";
+import { typingHandler } from "./typing.handler.js";
 
 export const connectionHandler = async (socket: AuthenticatedSocket) => {
   try {
@@ -24,6 +27,7 @@ export const connectionHandler = async (socket: AuthenticatedSocket) => {
     // Initialize handlers for this socket
     roomHandler(socket);
     chatHandler(socket);
+    typingHandler(socket);
 
     // Handle disconnection
     socket.on("disconnect", async () => {
@@ -49,6 +53,10 @@ export const connectionHandler = async (socket: AuthenticatedSocket) => {
           });
           // Broadcast updated room presence to remaining members
           await broadcastRoomPresence(activeRoomId);
+
+          // Remove from typing users and broadcast update
+          await removeTypingUser(activeRoomId, userId);
+          await broadcastTyping(activeRoomId);
         }
       }
     });
