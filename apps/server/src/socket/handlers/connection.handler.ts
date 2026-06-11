@@ -17,41 +17,45 @@ import { chatHandler } from "./chat.handler.js";
 import { roomHandler } from "./room.handler.js";
 
 export const connectionHandler = async (socket: AuthenticatedSocket) => {
-  const userId = socket.userId!;
-  await markUserOnline(userId, socket.id);
+  try {
+    const userId = socket.userId!;
+    await markUserOnline(userId, socket.id);
 
-  console.log(`User ${userId} connected with socket ${socket.id}`);
+    // Initialize handlers for this socket
+    roomHandler(socket);
+    chatHandler(socket);
 
-  // Initialize handlers for this socket
-  roomHandler(socket);
-  chatHandler(socket);
-
-  // Handle disconnection
-  socket.on("disconnect", async () => {
-    const remainingSockets = await markUserOffline(userId, socket.id);
-    if (remainingSockets === 0) {
-      // User is completely offline, clear their active room
-      const activeRoomId = await getActiveRoom(userId);
-      if (activeRoomId) {
-        // Remove User From Room Presence
-        await removeUserFromRoomPresence(activeRoomId, userId);
-        await clearActiveRoom(userId);
-        socket.leave(activeRoomId);
-        // Broadcast to other members that user has left
-        const user = await findUserById(userId);
-        if (!user) {
-          socket.emit(SERVER_EVENTS.ERROR, "User not found");
-          return;
+    // Handle disconnection
+    socket.on("disconnect", async () => {
+      const remainingSockets = await markUserOffline(userId, socket.id);
+      if (remainingSockets === 0) {
+        // User is completely offline, clear their active room
+        const activeRoomId = await getActiveRoom(userId);
+        if (activeRoomId) {
+          // Remove User From Room Presence
+          await removeUserFromRoomPresence(activeRoomId, userId);
+          await clearActiveRoom(userId);
+          socket.leave(activeRoomId);
+          // Broadcast to other members that user has left
+          const user = await findUserById(userId);
+          if (!user) {
+            socket.emit(SERVER_EVENTS.ERROR, "User not found");
+            return;
+          }
+          broadcastMemberLeftRoom(activeRoomId, {
+            id: user.id,
+            username: user.username,
+            avatarUrl: user.avatarUrl,
+          });
+          // Broadcast updated room presence to remaining members
+          await broadcastRoomPresence(activeRoomId);
         }
-        broadcastMemberLeftRoom(activeRoomId, {
-          id: user.id,
-          username: user.username,
-          avatarUrl: user.avatarUrl,
-        });
-        // Broadcast updated room presence to remaining members
-        await broadcastRoomPresence(activeRoomId);
       }
-    }
-    console.log(`User ${userId} disconnected from socket ${socket.id}`);
-  });
+    });
+  } catch (error) {
+    socket.emit(
+      SERVER_EVENTS.ERROR,
+      error instanceof Error ? error.message : "Connection error",
+    );
+  }
 };
