@@ -59,3 +59,37 @@ export const findRoomMessages = (roomId: string, limit = 50) => {
     },
   });
 };
+
+export const findMessageById = (messageId: string) => {
+  return prisma.message.findUnique({
+    where: {
+      id: messageId,
+    },
+  });
+};
+
+export const updateMessage = (messageId: string, content: string) => {
+  return prisma.message.update({
+    where: {
+      id: messageId,
+    },
+    data: {
+      content,
+    },
+    select: {
+      id: true,
+      content: true,
+      roomId: true,
+      createdAt: true,
+      updatedAt: true,
+      sender: {
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+          isVerified: true,
+        },
+      },
+    },
+  });
+};

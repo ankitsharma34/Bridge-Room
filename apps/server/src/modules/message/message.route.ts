@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
-import { getRoomMessages } from "./message.controller.js";
+import { getRoomMessages, patchMessage } from "./message.controller.js";
 
 const router = Router();
 
 router.get("/room/:roomId", authMiddleware, getRoomMessages);
+router.patch("/:messageId", authMiddleware, patchMessage);
 
 export default router;

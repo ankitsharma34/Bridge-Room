@@ -1,6 +1,12 @@
+import { broadcastMessageUpdated } from "../../socket/utils/broadcast-message-updated.js";
 import { AppError } from "../../utils/app-error.js";
 import { findMembership, findRoomById } from "../room/room.repository.js";
-import { createMessage, findRoomMessages } from "./message.repository.js";
+import {
+  createMessage,
+  findMessageById,
+  findRoomMessages,
+  updateMessage,
+} from "./message.repository.js";
 
 export const sendMessageService = async (
   userId: string,
@@ -39,4 +45,25 @@ export const getMessagesService = async (userId: string, roomId: string) => {
   }
 
   return await findRoomMessages(roomId);
+};
+
+export const updateMessageService = async (
+  userId: string,
+  messageId: string,
+  content: string,
+) => {
+  const message = await findMessageById(messageId);
+
+  if (!message) {
+    throw new AppError("Message not found", 404);
+  }
+
+  if (message.senderId !== userId) {
+    throw new AppError("You can only edit your own messages", 403);
+  }
+
+  const updatedMessage = await updateMessage(messageId, content.trim());
+  // Broadcast the updated message to all users in the room
+  broadcastMessageUpdated(updatedMessage.roomId, updatedMessage);
+  return updatedMessage;
 };
