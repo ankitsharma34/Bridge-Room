@@ -1,6 +1,8 @@
 export const CLIENT_EVENTS = {
   ACTIVE_ROOM_JOIN: "active_room:join",
   ACTIVE_ROOM_LEAVE: "active_room:leave",
+
+  MESSAGE_SEND: "message:send",
 };
 
 export const SERVER_EVENTS = {
@@ -14,6 +16,8 @@ export const SERVER_EVENTS = {
 
   MEMBER_JOINED_ROOM: "room:member_joined",
   MEMBER_LEFT_ROOM: "room:member_left",
+
+  MESSAGE_RECEIVED: "message:received",
 
   ERROR: "error",
 };
