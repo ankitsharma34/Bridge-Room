@@ -28,3 +28,34 @@ export const createMessage = (
     },
   });
 };
+
+export const findRoomMessages = (roomId: string, limit = 50) => {
+  return prisma.message.findMany({
+    where: {
+      roomId,
+    },
+
+    take: limit,
+
+    orderBy: {
+      createdAt: "desc",
+    },
+
+    select: {
+      id: true,
+      content: true,
+      roomId: true,
+      createdAt: true,
+      updatedAt: true,
+
+      sender: {
+        select: {
+          id: true,
+          username: true,
+          avatarUrl: true,
+          isVerified: true,
+        },
+      },
+    },
+  });
+};
