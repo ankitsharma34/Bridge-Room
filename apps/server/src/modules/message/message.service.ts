@@ -3,6 +3,7 @@ import { AppError } from "../../utils/app-error.js";
 import { findMembership, findRoomById } from "../room/room.repository.js";
 import {
   createMessage,
+  deleteMessage,
   findMessageById,
   findRoomMessages,
   updateMessage,
@@ -66,4 +67,20 @@ export const updateMessageService = async (
   // Broadcast the updated message to all users in the room
   broadcastMessageUpdated(updatedMessage.roomId, updatedMessage);
   return updatedMessage;
+};
+
+export const deleteMessageService = async (
+  userId: string,
+  messageId: string,
+) => {
+  const message = await findMessageById(messageId);
+  if (!message) {
+    throw new AppError("Message not found", 404);
+  }
+  // Only the sender of the message can delete it
+  if (message.senderId !== userId) {
+    throw new AppError("You can only delete your own messages", 403);
+  }
+
+  return await deleteMessage(messageId);
 };

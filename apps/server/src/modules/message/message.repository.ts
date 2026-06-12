@@ -93,3 +93,11 @@ export const updateMessage = (messageId: string, content: string) => {
     },
   });
 };
+
+export const deleteMessage = (messageId: string) => {
+  return prisma.message.delete({
+    where: {
+      id: messageId,
+    },
+  });
+};

@@ -4,7 +4,12 @@ import {
   patchMessageBodySchema,
   patchMessageParamsSchema,
 } from "./message.schema.js";
-import { getMessagesService, updateMessageService } from "./message.service.js";
+import {
+  deleteMessageService,
+  getMessagesService,
+  updateMessageService,
+} from "./message.service.js";
+import { broadcastMessageDeleted } from "../../socket/utils/broadcast-message-deleted.js";
 
 export const getRoomMessages = async (req: Request, res: Response) => {
   const { roomId } = getRoomMessagesSchema.parse(req.params);
@@ -32,5 +37,21 @@ export const patchMessage = async (req: Request, res: Response) => {
     success: true,
     message: "Message updated successfully",
     data: updatedMessage,
+  });
+};
+
+export const deleteMessageController = async (req: Request, res: Response) => {
+  const { messageId } = patchMessageParamsSchema.parse(req.params);
+
+  const deletedMessage = await deleteMessageService(
+    req.user!.userId,
+    messageId,
+  );
+
+  broadcastMessageDeleted(deletedMessage.roomId, deletedMessage.id);
+
+  res.status(200).json({
+    success: true,
+    message: "Message deleted successfully",
   });
 };

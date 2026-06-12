@@ -23,6 +23,7 @@ export const SERVER_EVENTS = {
   MESSAGE_RECEIVED: "message:received",
   TYPING_UPDATED: "typing:updated",
   MESSAGE_UPDATED: "message:updated",
+  MESSAGE_DELETED: "message:deleted",
 
   ERROR: "error",
 };
