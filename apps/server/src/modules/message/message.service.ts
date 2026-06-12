@@ -29,7 +29,11 @@ export const sendMessageService = async (
   return await createMessage(roomId, userId, content.trim());
 };
 
-export const getMessagesService = async (userId: string, roomId: string) => {
+export const getMessagesService = async (
+  userId: string,
+  roomId: string,
+  cursor?: string,
+) => {
   const room = await findRoomById(roomId);
   // Check if the room exists
   if (!room) {
@@ -45,7 +49,15 @@ export const getMessagesService = async (userId: string, roomId: string) => {
     );
   }
 
-  return await findRoomMessages(roomId);
+  const messages = await findRoomMessages(roomId, cursor);
+
+  const nextCursor =
+    messages.length === 50 ? messages[messages.length - 1]?.id ?? null : null;
+
+  return {
+    messages,
+    nextCursor,
+  };
 };
 
 export const updateMessageService = async (

@@ -6,6 +6,10 @@ export const getRoomMessagesSchema = z.object({
   }),
 });
 
+export const getMessagesQuerySchema = z.object({
+  cursor: z.string().optional(),
+});
+
 export const patchMessageParamsSchema = z.object({
   messageId: z.cuid2({
     message: "Invalid Message ID.",

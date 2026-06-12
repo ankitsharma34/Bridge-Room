@@ -29,25 +29,31 @@ export const createMessage = (
   });
 };
 
-export const findRoomMessages = (roomId: string, limit = 50) => {
+export const findRoomMessages = async (
+  roomId: string,
+  cursor?: string,
+  limit = 50,
+) => {
   return prisma.message.findMany({
     where: {
       roomId,
     },
-
     take: limit,
-
+    ...(cursor && {
+      cursor: {
+        id: cursor,
+      },
+      skip: 1,
+    }),
     orderBy: {
       createdAt: "desc",
     },
-
     select: {
       id: true,
       content: true,
       roomId: true,
       createdAt: true,
       updatedAt: true,
-
       sender: {
         select: {
           id: true,

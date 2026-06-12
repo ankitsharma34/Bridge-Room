@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import {
+  getMessagesQuerySchema,
   getRoomMessagesSchema,
   patchMessageBodySchema,
   patchMessageParamsSchema,
@@ -13,13 +14,13 @@ import { broadcastMessageDeleted } from "../../socket/utils/broadcast-message-de
 
 export const getRoomMessages = async (req: Request, res: Response) => {
   const { roomId } = getRoomMessagesSchema.parse(req.params);
+  const { cursor } = getMessagesQuerySchema.parse(req.query);
 
-  const messages = await getMessagesService(req.user!.userId, roomId);
+  const result = await getMessagesService(req.user!.userId, roomId, cursor);
 
   res.status(200).json({
     success: true,
-    count: messages.length,
-    messages,
+    ...result,
   });
 };
 
