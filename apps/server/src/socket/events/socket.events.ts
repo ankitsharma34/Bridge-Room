@@ -3,6 +3,7 @@ export const CLIENT_EVENTS = {
   ACTIVE_ROOM_LEAVE: "active_room:leave",
 
   MESSAGE_SEND: "message:send",
+  MESSAGE_READ: "message:read",
 
   TYPING_START: "typing:start",
   TYPING_STOP: "typing:stop",
@@ -20,10 +21,12 @@ export const SERVER_EVENTS = {
   MEMBER_JOINED_ROOM: "room:member_joined",
   MEMBER_LEFT_ROOM: "room:member_left",
 
-  MESSAGE_RECEIVED: "message:received",
   TYPING_UPDATED: "typing:updated",
+
+  MESSAGE_RECEIVED: "message:received",
   MESSAGE_UPDATED: "message:updated",
   MESSAGE_DELETED: "message:deleted",
+  MESSAGE_READ: "message:read",
 
   ERROR: "error",
 };
