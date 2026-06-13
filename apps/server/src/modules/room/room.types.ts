@@ -1,9 +1,5 @@
 import z from "zod";
-import {
-  createRoomSchema,
-  joinRoomSchema,
-  updateRoomSchema,
-} from "./room.schema.js";
+import { createRoomSchema, joinRoomSchema } from "./room.schema.js";
 
 export interface CreateRoomPayload {
   name: string;
@@ -24,3 +20,9 @@ export interface UpdateRoomInput {
   name?: string | undefined;
   description?: string | null | undefined;
 }
+
+export type membershipInput =
+  | {
+      lastReadAt: Date | null;
+    }
+  | undefined;

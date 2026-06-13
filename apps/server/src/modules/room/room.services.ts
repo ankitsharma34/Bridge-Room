@@ -1,5 +1,6 @@
 import { AppError } from "../../utils/app-error.js";
 import {
+  countUnreadMessages,
   createRoom,
   deleteRoom,
   deleteRoomMember,
@@ -143,20 +144,38 @@ export const getRoomMembersService = async (userId: string, roomId: string) => {
 
 export const getMyRoomsService = async (userId: string) => {
   const allRooms = await findUserRooms(userId);
+  const rooms = await Promise.all(
+    allRooms.map(async (room) => {
+      const membership = room.members[0];
+      const unreadCount = await countUnreadMessages(room.id, membership);
+      const lastMessage = room.messages[0] ?? null;
+
+      return {
+        id: room.id,
+        code: room.code,
+        name: room.name,
+        description: room.description,
+        role: room.ownerId === userId ? "OWNER" : "MEMBER",
+        memberCount: room._count.members,
+        unreadCount,
+
+        lastMessage: lastMessage
+          ? {
+              id: lastMessage.id,
+              content: lastMessage.content,
+              createdAt: lastMessage.createdAt,
+            }
+          : null,
+
+        createdAt: room.createdAt,
+        updatedAt: room.updatedAt,
+      };
+    }),
+  );
 
   return {
     totalRooms: allRooms.length,
-
-    rooms: allRooms.map((room) => ({
-      id: room.id,
-      code: room.code,
-      name: room.name,
-      description: room.description,
-      role: room.ownerId === userId ? "OWNER" : "MEMBER",
-      memberCount: room._count.members,
-      createdAt: room.createdAt,
-      updatedAt: room.updatedAt,
-    })),
+    rooms,
   };
 };
 

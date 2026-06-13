@@ -1,5 +1,9 @@
 import { prisma } from "../../prisma/prisma.js";
-import type { CreateRoomPayload, UpdateRoomInput } from "./room.types.js";
+import type {
+  CreateRoomPayload,
+  membershipInput,
+  UpdateRoomInput,
+} from "./room.types.js";
 
 export const findRoomByCode = (code: string) => {
   return prisma.room.findUnique({
@@ -104,9 +108,45 @@ export const findUserRooms = (userId: string) => {
           members: true,
         },
       },
+      members: {
+        where: {
+          userId,
+        },
+        select: {
+          lastReadAt: true,
+        },
+      },
+      messages: {
+        take: 1,
+        orderBy: {
+          createdAt: "desc",
+        },
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+        },
+      },
     },
+
     orderBy: {
       updatedAt: "desc",
+    },
+  });
+};
+
+export const countUnreadMessages = async (
+  roomId: string,
+  membership: membershipInput,
+) => {
+  return await prisma.message.count({
+    where: {
+      roomId,
+      ...(membership?.lastReadAt && {
+        createdAt: {
+          gt: membership.lastReadAt,
+        },
+      }),
     },
   });
 };
