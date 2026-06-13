@@ -21,3 +21,5 @@ export const patchMessageBodySchema = z.object({
     message: "Message cannot be empty.",
   }),
 });
+
+export const postReadReceiptBodySchema = patchMessageParamsSchema;

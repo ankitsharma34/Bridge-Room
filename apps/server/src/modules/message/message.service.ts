@@ -6,6 +6,7 @@ import {
   deleteMessage,
   findMessageById,
   findRoomMessages,
+  updateLastReadMessageId,
   updateMessage,
 } from "./message.repository.js";
 
@@ -52,7 +53,7 @@ export const getMessagesService = async (
   const messages = await findRoomMessages(roomId, cursor);
 
   const nextCursor =
-    messages.length === 50 ? messages[messages.length - 1]?.id ?? null : null;
+    messages.length === 50 ? (messages[messages.length - 1]?.id ?? null) : null;
 
   return {
     messages,
@@ -95,4 +96,39 @@ export const deleteMessageService = async (
   }
 
   return await deleteMessage(messageId);
+};
+
+export const readReceiptService = async (
+  userId: string,
+  roomId: string,
+  messageId: string,
+) => {
+  const room = await findRoomById(roomId);
+  // Check if the room exists
+  if (!room) {
+    throw new AppError("Room not found", 404);
+  }
+
+  const membership = await findMembership(roomId, userId);
+  // Check if the user is a member of the room
+  if (!membership) {
+    throw new AppError(
+      "Access denied. You are not a member of this room.",
+      403,
+    );
+  }
+
+  const message = await findMessageById(messageId);
+  // Check if the message exists
+  if (!message) {
+    throw new AppError("Message not found", 404);
+  }
+
+  if (message.roomId !== roomId) {
+    throw new AppError("Message does not belong to this room", 400);
+  }
+
+  await updateLastReadMessageId(userId, roomId, messageId);
+
+  return { roomId, messageId };
 };

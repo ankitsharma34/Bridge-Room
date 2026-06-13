@@ -107,3 +107,23 @@ export const deleteMessage = (messageId: string) => {
     },
   });
 };
+
+export const updateLastReadMessageId = (
+  userId: string,
+  roomId: string,
+  messageId: string,
+) => {
+  return prisma.roomMember.update({
+    where: {
+      roomId_userId: {
+        roomId,
+        userId,
+      },
+    },
+
+    data: {
+      lastReadMessageId: messageId,
+      lastReadAt: new Date(),
+    },
+  });
+};

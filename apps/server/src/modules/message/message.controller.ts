@@ -4,10 +4,12 @@ import {
   getRoomMessagesSchema,
   patchMessageBodySchema,
   patchMessageParamsSchema,
+  postReadReceiptBodySchema,
 } from "./message.schema.js";
 import {
   deleteMessageService,
   getMessagesService,
+  readReceiptService,
   updateMessageService,
 } from "./message.service.js";
 import { broadcastMessageDeleted } from "../../socket/utils/broadcast-message-deleted.js";
@@ -54,5 +56,18 @@ export const deleteMessageController = async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: "Message deleted successfully",
+  });
+};
+
+export const postReadReceipt = async (req: Request, res: Response) => {
+  const { roomId } = getRoomMessagesSchema.parse(req.params);
+  const { messageId } = postReadReceiptBodySchema.parse(req.body);
+
+  const result = await readReceiptService(req.user!.userId, roomId, messageId);
+
+  res.status(200).json({
+    success: true,
+    message: "Room marked as read up to the specified message",
+    data: result,
   });
 };
