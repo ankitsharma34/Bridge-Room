@@ -4,6 +4,7 @@ export const CLIENT_EVENTS = {
 
   MESSAGE_SEND: "message:send",
   MESSAGE_READ: "message:read",
+  MESSAGE_DELIVERED: "message:delivered",
 
   TYPING_START: "typing:start",
   TYPING_STOP: "typing:stop",
@@ -27,6 +28,7 @@ export const SERVER_EVENTS = {
   MESSAGE_UPDATED: "message:updated",
   MESSAGE_DELETED: "message:deleted",
   MESSAGE_READ: "message:read",
+  MESSAGE_DELIVERED: "message:delivered",
 
   ERROR: "error",
 };

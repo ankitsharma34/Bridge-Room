@@ -16,6 +16,7 @@ import { broadcastMemberLeftRoom } from "../utils/broadcast-room-member.js";
 import { broadcastRoomPresence } from "../utils/broadcast-room-presence.js";
 import { broadcastTyping } from "../utils/broadcast-typing.js";
 import { chatHandler } from "./chat.handler.js";
+import { deliveryHandler } from "./delivery.handler.js";
 import { readReceiptHandler } from "./read-receipt.handler.js";
 import { roomHandler } from "./room.handler.js";
 import { typingHandler } from "./typing.handler.js";
@@ -30,6 +31,7 @@ export const connectionHandler = async (socket: AuthenticatedSocket) => {
     chatHandler(socket);
     typingHandler(socket);
     readReceiptHandler(socket);
+    deliveryHandler(socket);
 
     // Handle disconnection
     socket.on("disconnect", async () => {

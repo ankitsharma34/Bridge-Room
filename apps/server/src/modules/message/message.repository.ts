@@ -127,3 +127,21 @@ export const updateLastReadMessageId = (
     },
   });
 };
+
+export const createMessageDelivery = (messageId: string, userId: string) => {
+  return prisma.messageDelivery.upsert({
+    where: {
+      messageId_userId: {
+        messageId,
+        userId,
+      },
+    },
+
+    create: {
+      messageId,
+      userId,
+    },
+
+    update: {},
+  });
+};
