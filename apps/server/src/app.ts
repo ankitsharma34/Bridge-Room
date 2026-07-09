@@ -1,4 +1,5 @@
 import express, { type Request, type Response } from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import { prisma } from "./prisma/prisma.js";
 import { redis } from "./redis/redis.js";
@@ -7,8 +8,19 @@ import authRouter from "./modules/auth/auth.routes.js";
 import roomRouter from "./modules/room/room.routes.js";
 import messageRouter from "./modules/message/message.route.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
+import { env } from "./config/env.js";
 
 const app = express();
+
+// CORS configuration
+const corsOptions = {
+  origin: env.FRONTEND_URL,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 // middlewares
 app.use(express.json());
