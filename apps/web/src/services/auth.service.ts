@@ -1,6 +1,10 @@
-import { registerDto } from "@bridgeroom/shared";
+import {
+  loginDto,
+  loginResponse,
+  registerDto,
+  registerResponseDto,
+} from "@bridgeroom/shared";
 import { api } from "./api";
-import { registerResponseDto } from "@bridgeroom/shared";
 
 export const authService = {
   register: async (payload: registerDto) => {
@@ -8,6 +12,11 @@ export const authService = {
       "/auth/register",
       payload,
     );
+    return data;
+  },
+
+  login: async (payload: loginDto) => {
+    const { data } = await api.post<loginResponse>("/auth/login", payload);
     return data;
   },
 };
