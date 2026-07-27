@@ -1,7 +1,5 @@
 import type { Request, Response } from "express";
-import { ZodError } from "zod";
-import { loginSchema } from "./auth.schema.js";
-import { registerSchema } from "@bridgeroom/shared";
+import { registerSchema, loginSchema } from "@bridgeroom/shared";
 import {
   createAuthTokens,
   getCurrentUser,
