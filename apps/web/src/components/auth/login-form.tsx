@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,8 +12,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import axios from "axios";
 import { useLogin } from "@/hooks/mutations/use-login";
+import { Loader2 } from "lucide-react";
 
-const LoginForm = () => {
+export const LoginForm = () => {
   const form = useForm<loginDto>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -21,53 +23,63 @@ const LoginForm = () => {
     },
   });
 
+  const { setAuth } = useAuthStore();
+  const router = useRouter();
+
   const loginMutation = useLogin({
     onSuccess: (response: loginResponse) => {
-      setAccessToken(response.accessToken);
-      toast.success(response.message);
+      setAuth(response.accessToken);
+      toast.success(response.message || "Welcome back to BridgeRoom!");
       router.push("/dashboard");
     },
-
     onError: (error: Error) => {
       if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message ?? "Login failed.");
+        const msg = error.response?.data?.message ?? "Invalid email or password";
+        toast.error(msg);
         return;
       }
-
-      toast.error("Something went wrong.");
+      toast.error("An unexpected error occurred. Please try again.");
     },
   });
-
-  const { setAccessToken } = useAuthStore();
-  const router = useRouter();
 
   const onSubmit = (data: loginDto) => {
     loginMutation.mutate(data);
   };
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <FormInput
         id="email"
         type="email"
+        autoComplete="email"
         {...form.register("email")}
-        label="Email"
-        placeholder="email"
+        label="Email Address"
+        placeholder="you@example.com"
         error={form.formState.errors.email?.message}
       />
+
       <PasswordInput
         id="password"
-        type="password"
+        autoComplete="current-password"
         {...form.register("password")}
         label="Password"
-        placeholder="password"
+        placeholder="Enter your password"
         error={form.formState.errors.password?.message}
       />
+
       <Button
         type="submit"
-        className="mt-2 h-11 w-full rounded-xl"
+        className="mt-2 h-11 w-full rounded-xl gap-2 font-medium shadow-sm transition-all"
         disabled={loginMutation.isPending}
       >
-        {loginMutation.isPending ? "Signing In..." : "Sign In"}
+        {loginMutation.isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Signing In...
+          </>
+        ) : (
+          "Sign In"
+        )}
       </Button>
     </form>
   );

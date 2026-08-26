@@ -1,30 +1,16 @@
-import type { Metadata } from "next";
-import "../globals.css";
-import { Providers } from "@/providers";
-import { Geist } from "next/font/google";
-import { cn } from "@/lib/utils";
 import Header from "@/components/landing/layout/landing-page-header";
 import Footer from "@/components/landing/layout/landing-page-footer";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
-
-export const metadata: Metadata = {
-  title: "BridgeRoom",
-  description: "Real-time Hangout platform",
-};
-
-export default function RootLayout({
+export default function LandingLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body>
-        <Header />
-        <Providers>{children}</Providers>
-        <Footer />
-      </body>
-    </html>
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="flex-1">{children}</main>
+      <Footer />
+    </div>
   );
 }

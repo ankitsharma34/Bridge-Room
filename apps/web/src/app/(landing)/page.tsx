@@ -1,11 +1,24 @@
-import React from "react";
+import HeroSection from "@/components/landing/hero-section";
+import TrustSection from "@/components/landing/trust-section";
+import FeaturesSection from "@/components/landing/features-section";
+import HowItWorksSection from "@/components/landing/how-it-works-section";
+import CTASection from "@/components/landing/cta-section";
+import type { Metadata } from "next";
 
-const Home = () => {
-  return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-4xl font-bold">Home Page: BridgeRoom</h1>
-    </main>
-  );
+export const metadata: Metadata = {
+  title: "BridgeRoom — Stay Close, No Matter the Distance",
+  description:
+    "A private digital room where long-distance friends and families can meet, talk, watch, and hang out together in real time.",
 };
 
-export default Home;
+export default function HomePage() {
+  return (
+    <div className="flex flex-col">
+      <HeroSection />
+      <TrustSection />
+      <FeaturesSection />
+      <HowItWorksSection />
+      <CTASection />
+    </div>
+  );
+}

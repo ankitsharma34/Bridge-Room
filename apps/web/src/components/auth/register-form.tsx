@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,8 +12,9 @@ import { useAuthStore } from "@/store/auth.store";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import axios from "axios";
+import { Loader2 } from "lucide-react";
 
-const RegisterForm = () => {
+export const RegisterForm = () => {
   const form = useForm<registerDto>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -23,69 +25,82 @@ const RegisterForm = () => {
     },
   });
 
+  const { setAuth } = useAuthStore();
+  const router = useRouter();
+
   const registerMutation = useRegister({
     onSuccess: (response) => {
-      setAccessToken(response.accessToken);
-      toast.success(response.message);
+      setAuth(response.accessToken);
+      toast.success(response.message || "Account created successfully! Welcome to BridgeRoom.");
       router.push("/dashboard");
     },
-
-    onError: (error) => {
+    onError: (error: Error) => {
       if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message ?? "Registration failed.");
+        const msg = error.response?.data?.message ?? "Registration failed. Please check your inputs.";
+        toast.error(msg);
         return;
       }
-
-      toast.error("Something went wrong.");
+      toast.error("An unexpected error occurred. Please try again.");
     },
   });
-
-  const { setAccessToken } = useAuthStore();
-  const router = useRouter();
 
   const onSubmit = (data: registerDto) => {
     registerMutation.mutate(data);
   };
+
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
       <FormInput
         id="username"
         type="text"
+        autoComplete="username"
         {...form.register("username")}
         label="Username"
-        placeholder="username"
+        placeholder="e.g. sarah_k"
         error={form.formState.errors.username?.message}
       />
+
       <FormInput
         id="email"
         type="email"
+        autoComplete="email"
         {...form.register("email")}
-        label="Email"
-        placeholder="email"
+        label="Email Address"
+        placeholder="you@example.com"
         error={form.formState.errors.email?.message}
       />
+
       <PasswordInput
         id="password"
-        type="password"
+        autoComplete="new-password"
         {...form.register("password")}
         label="Password"
-        placeholder="password"
+        placeholder="At least 6 characters"
         error={form.formState.errors.password?.message}
       />
+
       <PasswordInput
         id="confirmPassword"
-        type="password"
+        autoComplete="new-password"
         {...form.register("confirmPassword")}
         label="Confirm Password"
-        placeholder="confirm password"
+        placeholder="Re-enter your password"
         error={form.formState.errors.confirmPassword?.message}
       />
+
       <Button
         type="submit"
-        className="mt-2 h-11 w-full rounded-xl"
+        className="mt-2 h-11 w-full rounded-xl gap-2 font-medium shadow-sm transition-all"
         disabled={registerMutation.isPending}
       >
-        {registerMutation.isPending ? "Creating Account..." : "Create Account"}
+        {registerMutation.isPending ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Creating Account...
+          </>
+        ) : (
+          "Create Free Account"
+        )}
       </Button>
     </form>
   );
