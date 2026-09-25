@@ -10,6 +10,6 @@ const PORT = env.PORT || 5000;
 const server = createServer(app);
 initializeSocket(server);
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   logger.info(`BridgeRoom Server running on http://localhost:${PORT}`);
 });
