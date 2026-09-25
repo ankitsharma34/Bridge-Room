@@ -3,17 +3,28 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./schemas/*": "./src/schemas/*"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./schemas/*": {
+      "types": "./dist/schemas/*.d.ts",
+      "import": "./dist/schemas/*.js"
+    }
   },
   "scripts": {
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@repo/typescript-config": "workspace:*",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/node": "^26.6.2",
     "typescript": "^5.9.2"
   }
 }
