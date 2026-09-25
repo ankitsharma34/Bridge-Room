@@ -1,6 +1,6 @@
 <center>
 
-# BridgeRoom - Real-time Social Hangout Platform
+# BridgeRoom
 
 </center>
 
@@ -102,6 +102,7 @@ For detailed setup instructions, environment variables, database configuration, 
 
 ## Links
 
-- **Live Demo:** [BridgeRoom](https://bridge-room-web.vercel.app)
-- **GitHub:** [BridgeRoom Repository](https://github.com/ankitsharma34/Bridge-Room)
-- **Documentation:** [`docs`](./docs)
+- Frontend: [Live Demo](https://bridge-room-web.vercel.app)
+- Server Health: [Live API](https://bridgeroom-server.onrender.com/api/health)
+- Repository: [GitHub Repository](https://github.com/ankitsharma34/Bridge-Room)
+- Documentation: [Project Documentation](docs/README.md)
