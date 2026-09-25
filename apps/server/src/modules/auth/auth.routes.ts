@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router as createRouter, type Router } from "express";
 import {
   getMe,
   postLogin,
@@ -8,7 +8,7 @@ import {
 } from "./auth.controller.js";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
 
-const authRouter = Router();
+const authRouter: Router = createRouter();
 
 authRouter.post("/register", postRegister);
 authRouter.post("/login", postLogin);

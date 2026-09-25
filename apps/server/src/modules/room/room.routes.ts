@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router as createRouter, type Router } from "express";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
 import {
   deleteMyRoom,
@@ -12,7 +12,7 @@ import {
   postLeaveRoom,
 } from "./room.controller.js";
 
-const router = Router();
+const router: Router = createRouter();
 router.post("/create", authMiddleware, postCreateRoom);
 router.post("/join", authMiddleware, postJoinRoom);
 router.post("/leave", authMiddleware, postLeaveRoom);

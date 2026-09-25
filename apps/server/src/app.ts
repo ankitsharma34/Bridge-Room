@@ -1,4 +1,4 @@
-import express, { type Request, type Response } from "express";
+import express, { type Request, type Response, type Express } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { prisma } from "./prisma/prisma.js";
@@ -10,7 +10,7 @@ import messageRouter from "./modules/message/message.route.js";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import { env } from "./config/env.js";
 
-const app = express();
+const app: Express = express();
 
 // CORS configuration
 const corsOptions = {

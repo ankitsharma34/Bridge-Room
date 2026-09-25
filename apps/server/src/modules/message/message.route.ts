@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router as createRouter, type Router } from "express";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
 import {
   deleteMessageController,
@@ -7,7 +7,7 @@ import {
   postReadReceipt,
 } from "./message.controller.js";
 
-const router = Router();
+const router: Router = createRouter();
 
 router.get("/rooms/:roomId", authMiddleware, getRoomMessages);
 router.post("/rooms/:roomId/read", authMiddleware, postReadReceipt);
