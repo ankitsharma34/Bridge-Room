@@ -9,7 +9,7 @@
     "migrate": "prisma migrate dev",
     "studio": "prisma studio",
     "build": "prisma generate && tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/src/server.js",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],
