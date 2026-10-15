@@ -16,6 +16,23 @@ export interface ChatMessage {
   updatedAt: string;
 }
 
+export type IncomingChatMessage = Omit<ChatMessage, "senderId" | "updatedAt"> & {
+  senderId?: string;
+  updatedAt?: string;
+};
+
+export type SendMessageAcknowledgement =
+  | { success: true; message: IncomingChatMessage }
+  | { success: false; error: string };
+
+export const normalizeChatMessage = (
+  message: IncomingChatMessage,
+): ChatMessage => ({
+  ...message,
+  senderId: message.senderId ?? message.sender?.id ?? "",
+  updatedAt: message.updatedAt ?? message.createdAt,
+});
+
 export interface GetMessagesResponse {
   success: boolean;
   messages: ChatMessage[];
@@ -35,13 +52,20 @@ export const messageService = {
     roomId: string,
     cursor?: string,
   ): Promise<GetMessagesResponse> => {
-    const { data } = await api.get<GetMessagesResponse>(
+    const { data } = await api.get<
+      Omit<GetMessagesResponse, "messages"> & {
+        messages: IncomingChatMessage[];
+      }
+    >(
       `/messages/rooms/${roomId}`,
       {
         params: cursor ? { cursor } : undefined,
       },
     );
-    return data;
+    return {
+      ...data,
+      messages: data.messages.map(normalizeChatMessage),
+    };
   },
 
   markAsRead: async (
@@ -62,9 +86,12 @@ export const messageService = {
     const { data } = await api.patch<{
       success: boolean;
       message: string;
-      data: ChatMessage;
+      data: IncomingChatMessage;
     }>(`/messages/${messageId}`, payload);
-    return data;
+    return {
+      ...data,
+      data: normalizeChatMessage(data.data),
+    };
   },
 
   deleteMessage: async (
