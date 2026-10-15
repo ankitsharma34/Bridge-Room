@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { useMessages, messagesQueryKey } from "@/hooks/queries/use-messages";
+import { useRoomMembers } from "@/hooks/queries/use-room-members";
+import { useTypingIndicator } from "@/hooks/use-typing-indicator";
 import {
   type ChatMessage,
   type GetMessagesResponse,
@@ -49,6 +51,9 @@ export function RoomChat({ roomId }: RoomChatProps) {
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const user = useAuthStore((state) => state.user);
+  const { data: roomMembers } = useRoomMembers(roomId);
+  const { typingUserIds, notifyTyping, stopTyping } =
+    useTypingIndicator(roomId);
   const {
     data,
     messages,
@@ -70,6 +75,20 @@ export function RoomChat({ roomId }: RoomChatProps) {
     height: number;
     top: number;
   } | null>(null);
+
+  const typingNames = typingUserIds.map(
+    (userId) =>
+      roomMembers?.find((member) => member.id === userId)?.username ??
+      "Someone",
+  );
+  const typingText =
+    typingNames.length === 1
+      ? `${typingNames[0]} is typing...`
+      : typingNames.length === 2
+        ? `${typingNames[0]} and ${typingNames[1]} are typing...`
+        : typingNames.length > 2
+          ? `${typingNames[0]} and ${typingNames.length - 1} others are typing...`
+          : null;
 
   const updateMessageCache = useCallback(
     (updater: (current: MessagesInfiniteData) => MessagesInfiniteData) => {
@@ -194,6 +213,8 @@ export function RoomChat({ roomId }: RoomChatProps) {
       isLoading
     )
       return;
+
+    stopTyping();
 
     // Optimistic message
     const tempId = `temp-${Date.now()}`;
@@ -425,6 +446,12 @@ export function RoomChat({ roomId }: RoomChatProps) {
 
       {/* Message Input Box */}
       <div className="border-t border-border/60 p-3 bg-card/60">
+        <div
+          className="mb-1 min-h-4 text-[10px] font-medium text-primary"
+          aria-live="polite"
+        >
+          {typingText}
+        </div>
         {(sendError || connectionError) && (
           <p className="mb-2 text-[10px] text-destructive" role="alert">
             {sendError || connectionError}
@@ -435,9 +462,12 @@ export function RoomChat({ roomId }: RoomChatProps) {
             <textarea
               value={inputText}
               onChange={(e) => {
-                setInputText(e.target.value);
+                const nextValue = e.target.value;
+                setInputText(nextValue);
                 setSendError(null);
+                notifyTyping(nextValue);
               }}
+              onBlur={stopTyping}
               onKeyDown={handleKeyDown}
               placeholder="Send a message... (Enter to send)"
               rows={1}
