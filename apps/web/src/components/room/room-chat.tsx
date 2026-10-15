@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useMessages, messagesQueryKey } from "@/hooks/queries/use-messages";
 import { useRoomMembers } from "@/hooks/queries/use-room-members";
 import { useTypingIndicator } from "@/hooks/use-typing-indicator";
+import { useMessageReceipts } from "@/hooks/use-message-receipts";
 import {
   type ChatMessage,
   type GetMessagesResponse,
@@ -22,6 +23,7 @@ import {
   MessageSquare,
   Sparkles,
   CheckCheck,
+  Check,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -63,6 +65,10 @@ export function RoomChat({ roomId }: RoomChatProps) {
     hasNextPage,
     isFetchingNextPage,
   } = useMessages(roomId);
+  const { chatRef, markDelivered, getReceiptStatus } = useMessageReceipts(
+    roomId,
+    messages,
+  );
   const {
     socket,
     status: connectionStatus,
@@ -164,6 +170,7 @@ export function RoomChat({ roomId }: RoomChatProps) {
       const message = normalizeChatMessage(incoming);
 
       reconcileMessage(message);
+      markDelivered(message);
     };
 
     const handleMessageUpdated = (incoming: IncomingChatMessage) => {
@@ -200,7 +207,7 @@ export function RoomChat({ roomId }: RoomChatProps) {
       socket.off(EVENTS.MESSAGE_UPDATED, handleMessageUpdated);
       socket.off(EVENTS.MESSAGE_DELETED, handleMessageDeleted);
     };
-  }, [reconcileMessage, roomId, socket, updateMessageCache]);
+  }, [markDelivered, reconcileMessage, roomId, socket, updateMessageCache]);
 
   const handleSendMessage = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -288,7 +295,10 @@ export function RoomChat({ roomId }: RoomChatProps) {
   };
 
   return (
-    <div className="flex h-full flex-col border-l border-border/60 bg-card/40 w-80 lg:w-96 shrink-0">
+    <div
+      ref={chatRef}
+      className="flex h-full flex-col border-l border-border/60 bg-card/40 w-80 lg:w-96 shrink-0"
+    >
       {/* Chat Header */}
       <div className="flex h-14 items-center justify-between border-b border-border/60 px-4">
         <div className="flex items-center gap-2">
@@ -379,6 +389,7 @@ export function RoomChat({ roomId }: RoomChatProps) {
               const isMe = msg.senderId === user?.id;
               const senderName =
                 msg.sender?.username || (isMe ? "You" : "Friend");
+              const receiptStatus = isMe ? getReceiptStatus(msg) : null;
               const timeString = new Date(msg.createdAt).toLocaleTimeString(
                 [],
                 {
@@ -428,11 +439,25 @@ export function RoomChat({ roomId }: RoomChatProps) {
 
                     <div className="flex items-center gap-1 mt-0.5 px-1 text-[10px] text-muted-foreground">
                       <span>{timeString}</span>
-                      {isMe &&
-                        (msg.id.startsWith("temp-") ? (
+                      {receiptStatus &&
+                        (receiptStatus === "sending" ? (
                           <Loader2 className="h-3 w-3 animate-spin text-primary/70" />
+                        ) : receiptStatus === "sent" ? (
+                          <Check
+                            className="h-3 w-3 text-muted-foreground"
+                            aria-label="Sent"
+                          />
                         ) : (
-                          <CheckCheck className="h-3 w-3 text-primary/70" />
+                          <CheckCheck
+                            className={`h-3 w-3 ${
+                              receiptStatus === "read"
+                                ? "text-sky-500"
+                                : "text-muted-foreground"
+                            }`}
+                            aria-label={
+                              receiptStatus === "read" ? "Read" : "Delivered"
+                            }
+                          />
                         ))}
                     </div>
                   </div>
