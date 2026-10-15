@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { DoorOpen, ArrowLeft, Users, MessageSquare } from "lucide-react";
+import { useRoomSocket } from "@/hooks/use-room-socket";
 
 interface RoomPageProps {
   params: Promise<{ roomId: string }>;
@@ -18,6 +19,7 @@ interface RoomPageProps {
 export default function RoomPage({ params }: RoomPageProps) {
   const { roomId } = use(params);
   const { data: room, isLoading, isError } = useRoom(roomId);
+  const { onlineUserIds, onlineCount } = useRoomSocket(roomId);
   const [mobileTab, setMobileTab] = useState<"STAGE" | "CHAT" | "MEMBERS">("STAGE");
 
   if (isLoading) {
@@ -129,7 +131,11 @@ export default function RoomPage({ params }: RoomPageProps) {
             mobileTab !== "MEMBERS" ? "hidden xl:flex" : "flex w-full"
           }`}
         >
-          <RoomMembers roomId={room.id} />
+          <RoomMembers
+            roomId={room.id}
+            onlineUserIds={onlineUserIds}
+            onlineCount={onlineCount}
+          />
         </div>
 
         {/* Right Chat Panel */}

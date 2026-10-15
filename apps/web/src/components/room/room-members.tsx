@@ -8,9 +8,15 @@ import { Users, Crown } from "lucide-react";
 
 interface RoomMembersProps {
   roomId: string;
+  onlineUserIds: ReadonlySet<string>;
+  onlineCount: number;
 }
 
-export function RoomMembers({ roomId }: RoomMembersProps) {
+export function RoomMembers({
+  roomId,
+  onlineUserIds,
+  onlineCount,
+}: RoomMembersProps) {
   const { data: members, isLoading, isError } = useRoomMembers(roomId);
 
   return (
@@ -27,6 +33,9 @@ export function RoomMembers({ roomId }: RoomMembersProps) {
               {members.length}
             </Badge>
           )}
+          <span className="text-[10px] font-medium text-emerald-600">
+            {onlineCount} online
+          </span>
         </div>
       </div>
 
@@ -55,6 +64,7 @@ export function RoomMembers({ roomId }: RoomMembersProps) {
         ) : (
           members.map((member) => {
             const isOwner = member.role === "OWNER";
+            const isOnline = onlineUserIds.has(member.id);
 
             return (
               <div
@@ -68,7 +78,12 @@ export function RoomMembers({ roomId }: RoomMembersProps) {
                       fallback={member.username}
                       size="sm"
                     />
-                    <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-emerald-500 ring-2 ring-background" />
+                    <span
+                      className={`absolute bottom-0 right-0 h-2 w-2 rounded-full ring-2 ring-background ${
+                        isOnline ? "bg-emerald-500" : "bg-muted-foreground/40"
+                      }`}
+                      aria-label={isOnline ? "Online" : "Offline"}
+                    />
                   </div>
 
                   <div className="min-w-0">
@@ -79,7 +94,7 @@ export function RoomMembers({ roomId }: RoomMembersProps) {
                       )}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {isOwner ? "Host" : "Member"}
+                      {isOwner ? "Host" : "Member"} · {isOnline ? "Online" : "Offline"}
                     </p>
                   </div>
                 </div>
