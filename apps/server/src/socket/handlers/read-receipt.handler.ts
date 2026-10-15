@@ -41,7 +41,7 @@ export const readReceiptHandler = (socket: AuthenticatedSocket) => {
         }
 
         // Update DB
-        await updateLastReadMessageId(roomId, socket.userId!, messageId);
+        await updateLastReadMessageId(socket.userId!, roomId, messageId);
 
         // Broadcast to room
         socket.to(roomId).emit(SERVER_EVENTS.MESSAGE_READ, {

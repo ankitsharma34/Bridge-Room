@@ -3,13 +3,15 @@ import type { Server as HttpServer } from "http";
 
 import { connectionHandler } from "./handlers/connection.handler.js";
 import { socketAuthMiddleware } from "./middleware/socket-auth.middleware.js";
+import { env } from "../config/env.js";
 
 let io: Server;
 
 export const initializeSocket = (httpServer: HttpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: "*",
+      origin: env.FRONTEND_URL,
+      credentials: true,
     },
   });
 

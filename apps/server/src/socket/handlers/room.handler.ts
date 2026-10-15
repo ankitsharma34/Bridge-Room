@@ -38,6 +38,12 @@ export const roomHandler = (socket: AuthenticatedSocket) => {
       // 3. Get previous active room
       const previousRoomId = await getActiveRoom(socket.userId!);
       if (previousRoomId === roomId) {
+        // Redis state can outlive a transport connection. Always attach a
+        // reconnecting socket to the Socket.IO room before returning.
+        socket.join(roomId);
+        await addUserToRoomPresence(roomId, socket.userId!);
+        await broadcastRoomPresence(roomId);
+        socket.emit(SERVER_EVENTS.ACTIVE_ROOM_JOINED, roomId);
         return;
       }
       const user = await findUserById(socket.userId!);

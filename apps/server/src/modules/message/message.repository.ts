@@ -15,7 +15,9 @@ export const createMessage = (
       id: true,
       content: true,
       roomId: true,
+      senderId: true,
       createdAt: true,
+      updatedAt: true,
 
       sender: {
         select: {
