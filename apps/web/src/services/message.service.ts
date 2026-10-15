@@ -16,7 +16,10 @@ export interface ChatMessage {
   updatedAt: string;
 }
 
-export type IncomingChatMessage = Omit<ChatMessage, "senderId" | "updatedAt"> & {
+export type IncomingChatMessage = Omit<
+  ChatMessage,
+  "senderId" | "updatedAt"
+> & {
   senderId?: string;
   updatedAt?: string;
 };
@@ -56,12 +59,9 @@ export const messageService = {
       Omit<GetMessagesResponse, "messages"> & {
         messages: IncomingChatMessage[];
       }
-    >(
-      `/messages/rooms/${roomId}`,
-      {
-        params: cursor ? { cursor } : undefined,
-      },
-    );
+    >(`/messages/rooms/${roomId}`, {
+      params: cursor ? { cursor } : undefined,
+    });
     return {
       ...data,
       messages: data.messages.map(normalizeChatMessage),

@@ -13,7 +13,7 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useQueryClient } from "@tanstack/react-query";
+import { type InfiniteData, useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "@/providers/socket-provider";
 import {
   Send,
@@ -32,7 +32,10 @@ interface DeletedMessagePayload {
   messageId: string;
 }
 
-type MessageUpdater = (messages: ChatMessage[]) => ChatMessage[];
+type MessagesInfiniteData = InfiniteData<
+  GetMessagesResponse,
+  string | undefined
+>;
 
 const EVENTS = {
   MESSAGE_SEND: "message:send",
@@ -43,87 +46,130 @@ const EVENTS = {
 
 export function RoomChat({ roomId }: RoomChatProps) {
   const [inputText, setInputText] = useState("");
-  const [localMessages, setLocalMessages] = useState<ChatMessage[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const user = useAuthStore((state) => state.user);
-  const { data, isLoading, isError } = useMessages(roomId);
+  const {
+    data,
+    messages,
+    isLoading,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMessages(roomId);
   const {
     socket,
     status: connectionStatus,
     error: connectionError,
   } = useSocket();
   const queryClient = useQueryClient();
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const pendingScrollPositionRef = useRef<{
+    height: number;
+    top: number;
+  } | null>(null);
 
-  const updateMessages = useCallback(
-    (updater: MessageUpdater) => {
-      setLocalMessages(updater);
-      queryClient.setQueriesData<GetMessagesResponse>(
-        { queryKey: messagesQueryKey(roomId) },
-        (current) =>
-          current
-            ? { ...current, messages: updater(current.messages) }
-            : current,
+  const updateMessageCache = useCallback(
+    (updater: (current: MessagesInfiniteData) => MessagesInfiniteData) => {
+      queryClient.setQueryData<MessagesInfiniteData>(
+        messagesQueryKey(roomId),
+        (current) => (current ? updater(current) : current),
       );
     },
     [queryClient, roomId],
   );
 
-  // Sync query data into local messages
+  const reconcileMessage = useCallback(
+    (message: ChatMessage) => {
+      updateMessageCache((current) => {
+        const pages = current.pages.map((page) => ({
+          ...page,
+          messages: page.messages.filter(
+            (item) =>
+              item.id !== message.id &&
+              !(
+                message.senderId === user?.id &&
+                item.id.startsWith("temp-") &&
+                item.content === message.content
+              ),
+          ),
+        }));
+
+        const firstPage = pages[0];
+        if (!firstPage) return current;
+
+        pages[0] = {
+          ...firstPage,
+          messages: [message, ...firstPage.messages],
+        };
+
+        return { ...current, pages };
+      });
+    },
+    [updateMessageCache, user?.id],
+  );
+
   useEffect(() => {
-    if (data?.messages) {
-      setLocalMessages(data.messages);
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const pendingPosition = pendingScrollPositionRef.current;
+    if (pendingPosition) {
+      container.scrollTop =
+        pendingPosition.top + container.scrollHeight - pendingPosition.height;
+      pendingScrollPositionRef.current = null;
+      return;
     }
-  }, [data?.messages]);
 
-  // Auto-scroll to bottom
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [data?.pages.length, messages.length]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [localMessages]);
+  const handleLoadOlder = async () => {
+    const container = messagesContainerRef.current;
+    if (!container || !hasNextPage || isFetchingNextPage) return;
+
+    pendingScrollPositionRef.current = {
+      height: container.scrollHeight,
+      top: container.scrollTop,
+    };
+
+    const result = await fetchNextPage();
+    if (result.isError) pendingScrollPositionRef.current = null;
+  };
 
   useEffect(() => {
     const handleMessageReceived = (incoming: IncomingChatMessage) => {
       if (incoming.roomId !== roomId) return;
       const message = normalizeChatMessage(incoming);
 
-      updateMessages((current) => {
-        if (current.some((item) => item.id === message.id)) return current;
-
-        const optimisticIndex =
-          message.senderId === user?.id
-            ? current.findIndex(
-                (item) =>
-                  item.id.startsWith("temp-") &&
-                  item.content === message.content,
-              )
-            : -1;
-
-        if (optimisticIndex === -1) return [...current, message];
-
-        const next = [...current];
-        next[optimisticIndex] = message;
-        return next;
-      });
+      reconcileMessage(message);
     };
 
     const handleMessageUpdated = (incoming: IncomingChatMessage) => {
       if (incoming.roomId !== roomId) return;
       const message = normalizeChatMessage(incoming);
 
-      updateMessages((current) =>
-        current.map((item) => (item.id === message.id ? message : item)),
-      );
+      updateMessageCache((current) => ({
+        ...current,
+        pages: current.pages.map((page) => ({
+          ...page,
+          messages: page.messages.map((item) =>
+            item.id === message.id ? message : item,
+          ),
+        })),
+      }));
     };
 
     const handleMessageDeleted = ({ messageId }: DeletedMessagePayload) => {
-      updateMessages((current) =>
-        current.filter((message) => message.id !== messageId),
-      );
+      updateMessageCache((current) => ({
+        ...current,
+        pages: current.pages.map((page) => ({
+          ...page,
+          messages: page.messages.filter((message) => message.id !== messageId),
+        })),
+      }));
     };
 
     socket.on(EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
@@ -135,12 +181,18 @@ export function RoomChat({ roomId }: RoomChatProps) {
       socket.off(EVENTS.MESSAGE_UPDATED, handleMessageUpdated);
       socket.off(EVENTS.MESSAGE_DELETED, handleMessageDeleted);
     };
-  }, [roomId, socket, updateMessages, user?.id]);
+  }, [reconcileMessage, roomId, socket, updateMessageCache]);
 
   const handleSendMessage = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const content = inputText.trim();
-    if (!content || !user || connectionStatus !== "connected" || isSending)
+    if (
+      !content ||
+      !user ||
+      connectionStatus !== "connected" ||
+      isSending ||
+      isLoading
+    )
       return;
 
     // Optimistic message
@@ -159,7 +211,7 @@ export function RoomChat({ roomId }: RoomChatProps) {
       updatedAt: new Date().toISOString(),
     };
 
-    updateMessages((current) => [...current, optimisticMessage]);
+    reconcileMessage(optimisticMessage);
     setInputText("");
     setIsSending(true);
     setSendError(null);
@@ -184,9 +236,13 @@ export function RoomChat({ roomId }: RoomChatProps) {
               acknowledgementError ||
               "The message could not be sent.";
 
-            updateMessages((current) =>
-              current.filter((item) => item.id !== tempId),
-            );
+            updateMessageCache((current) => ({
+              ...current,
+              pages: current.pages.map((page) => ({
+                ...page,
+                messages: page.messages.filter((item) => item.id !== tempId),
+              })),
+            }));
             setInputText((current) => current || content);
             setSendError(message);
             setIsSending(false);
@@ -197,17 +253,7 @@ export function RoomChat({ roomId }: RoomChatProps) {
           const persistedMessage = normalizeChatMessage(
             acknowledgement.message,
           );
-          updateMessages((current) => {
-            const withoutOptimistic = current.filter(
-              (item) => item.id !== tempId,
-            );
-
-            return withoutOptimistic.some(
-              (item) => item.id === persistedMessage.id,
-            )
-              ? withoutOptimistic
-              : [...withoutOptimistic, persistedMessage];
-          });
+          reconcileMessage(persistedMessage);
           setIsSending(false);
         },
       );
@@ -253,7 +299,10 @@ export function RoomChat({ roomId }: RoomChatProps) {
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-3.5"
+      >
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
@@ -270,7 +319,7 @@ export function RoomChat({ roomId }: RoomChatProps) {
           <p className="text-center text-xs text-muted-foreground pt-4">
             Could not load messages.
           </p>
-        ) : localMessages.length === 0 ? (
+        ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full p-6 text-center text-muted-foreground">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Sparkles className="h-5 w-5" />
@@ -283,67 +332,93 @@ export function RoomChat({ roomId }: RoomChatProps) {
             </p>
           </div>
         ) : (
-          localMessages.map((msg) => {
-            const isMe = msg.senderId === user?.id;
-            const senderName =
-              msg.sender?.username || (isMe ? "You" : "Friend");
-            const timeString = new Date(msg.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+          <>
+            {hasNextPage && (
+              <div className="flex justify-center pb-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLoadOlder}
+                  disabled={isFetchingNextPage}
+                  className="h-7 rounded-lg px-3 text-[10px]"
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Load older messages"
+                  )}
+                </Button>
+              </div>
+            )}
+            {messages.map((msg) => {
+              const isMe = msg.senderId === user?.id;
+              const senderName =
+                msg.sender?.username || (isMe ? "You" : "Friend");
+              const timeString = new Date(msg.createdAt).toLocaleTimeString(
+                [],
+                {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                },
+              );
 
-            return (
-              <div
-                key={msg.id}
-                className={`flex items-start gap-2.5 ${
-                  isMe ? "flex-row-reverse" : "flex-row"
-                }`}
-              >
-                {!isMe && (
-                  <Avatar
-                    src={msg.sender?.avatarUrl}
-                    fallback={senderName}
-                    size="sm"
-                    className="mt-0.5"
-                  />
-                )}
-
+              return (
                 <div
-                  className={`flex flex-col max-w-[75%] ${
-                    isMe ? "items-end" : "items-start"
+                  key={msg.id}
+                  className={`flex items-start gap-2.5 ${
+                    isMe ? "flex-row-reverse" : "flex-row"
                   }`}
                 >
                   {!isMe && (
-                    <span className="text-[11px] font-semibold text-foreground mb-0.5 px-1">
-                      {senderName}
-                    </span>
+                    <Avatar
+                      src={msg.sender?.avatarUrl}
+                      fallback={senderName}
+                      size="sm"
+                      className="mt-0.5"
+                    />
                   )}
 
                   <div
-                    className={`rounded-2xl px-3.5 py-2 text-xs leading-relaxed shadow-2xs ${
-                      isMe
-                        ? "bg-primary text-primary-foreground rounded-tr-none"
-                        : "bg-muted/80 text-foreground border border-border/50 rounded-tl-none"
+                    className={`flex flex-col max-w-[75%] ${
+                      isMe ? "items-end" : "items-start"
                     }`}
                   >
-                    <p className="wrap-break-word whitespace-pre-wrap">
-                      {msg.content}
-                    </p>
-                  </div>
+                    {!isMe && (
+                      <span className="text-[11px] font-semibold text-foreground mb-0.5 px-1">
+                        {senderName}
+                      </span>
+                    )}
 
-                  <div className="flex items-center gap-1 mt-0.5 px-1 text-[10px] text-muted-foreground">
-                    <span>{timeString}</span>
-                    {isMe &&
-                      (msg.id.startsWith("temp-") ? (
-                        <Loader2 className="h-3 w-3 animate-spin text-primary/70" />
-                      ) : (
-                        <CheckCheck className="h-3 w-3 text-primary/70" />
-                      ))}
+                    <div
+                      className={`rounded-2xl px-3.5 py-2 text-xs leading-relaxed shadow-2xs ${
+                        isMe
+                          ? "bg-primary text-primary-foreground rounded-tr-none"
+                          : "bg-muted/80 text-foreground border border-border/50 rounded-tl-none"
+                      }`}
+                    >
+                      <p className="wrap-break-word whitespace-pre-wrap">
+                        {msg.content}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1 mt-0.5 px-1 text-[10px] text-muted-foreground">
+                      <span>{timeString}</span>
+                      {isMe &&
+                        (msg.id.startsWith("temp-") ? (
+                          <Loader2 className="h-3 w-3 animate-spin text-primary/70" />
+                        ) : (
+                          <CheckCheck className="h-3 w-3 text-primary/70" />
+                        ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -374,7 +449,10 @@ export function RoomChat({ roomId }: RoomChatProps) {
             type="submit"
             size="icon"
             disabled={
-              !inputText.trim() || isSending || connectionStatus !== "connected"
+              !inputText.trim() ||
+              isSending ||
+              connectionStatus !== "connected" ||
+              isLoading
             }
             className="h-9.5 w-9.5 rounded-xl shrink-0 shadow-xs"
             aria-label="Send message"
